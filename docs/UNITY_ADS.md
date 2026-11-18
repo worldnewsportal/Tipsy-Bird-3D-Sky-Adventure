@@ -1,101 +1,150 @@
-# دليل تكامل Unity Ads
+# دليل ربط Unity Ads (محدَّث 2026/2027)
 
-اللعبة جاهزة. بالكامل من جهة الويب (JS). كل ما عليك هو إضافة الجزء الأصيل (الأندرويد) الذي يوفر إضافة كاباسيتور باسم `UnityAds`.
+اللعبة جاهزة بالكامل من جهة الويب (JS). كل ما عليك هو إضافة الجزء الأصلي (الأندرويد) الذي يوفر إضافة كاباسيتور باسم `UnityAds`.
 
-## العقد المتفق عليه (Bridge API)
+## الوضع الحالي لـ Unity Ads (مهم)
 
-الكود في `src/index.html` يبحث عن:
+- **حزمة Unity القديمة داخل المحرر (Advertisement Legacy)**: منذ 1 أبريل 2026 أداؤها منخفض — لا نستخدمها.
+- **Unity Ads Android SDK المباشر**: مدعوم ونشط — أحدث إصدار **4.21.0** (تحسينات تهيئة أسرع وحمولات أضمن). **هذا ما نستخدمه**.
+- **Unity LevelPlay**: منصة وساطة لجمع شبكات إعلانية متعددة — اختيارية لاحقاً إن أردت AdMob/Meta في نفس اللعبة. ليست مطلوبة الآن.
 
-```js
-window.Capacitor.Plugins.UnityAds.showRewarded({ placement: 'Rewarded_Android' })
-// يرجع Promise → resolves { rewarded: true }  أو rejects
+## الخطوة 1: من لوحة Unity (مرة واحدة)
+
+1. [dash.unity3d.com](https://dash.unity3d.com) → **Monetization → Projects → Add new project**
+2. اكتب اسم المشروع و الحزمة نفسها الموجودة في `android/app/build.gradle` (applicationId)
+3. **Monetization Setup → Android** → انسخ **Game ID (Android)**
+4. فعّل **Test mode** في البداية حتى تتحقق، وأوقفه قبل رفع الإصدار النهائي للنشر
+5. الخانات الجاهزة تكفي: `Rewarded_Android`, `Interstitial_Android`, `Banner_Android`
+
+## الخطوة 2: الإضافة الأصلية (Android/Java)
+
+أضف السطر في `android/app/build.gradle`:
+
+```
+dependencies {
+    implementation 'com.unity3d.ads:unity-ads:4.21.0'
+}
 ```
 
-- `rewarded: true` تعني أن اللاعب أكمل المشاهدة وحصل على المكافأة.
-- إذا لم تكن الإضافة موجودة (نسخة قبل إضافتك)، تُخفى جميع أزرار الإعلانات تلقائيًا ولا يظهر أي خطأ — اللعبة تعمل 100% بلا إعلانات.
+أنشئ `android/app/src/main/java/<حزمتك>/UnityAdsPlugin.java`:
 
-## نقاط ظهور الإعلانات (كلها اختيارية ولا تظهر إلا بضغطة اللاعب)
+```java
+import android.app.Activity;
+import android.view.ViewGroup;
+import android.widget.FrameLayout;
+import com.getcapacitor.JSObject;
+import com.getcapacitor.Plugin;
+import com.getcapacitor.PluginCall;
+import com.getcapacitor.PluginMethod;
+import com.getcapacitor.annotation.CapacitorPlugin;
+import com.unity3d.ads.IUnityAdsInitializationListener;
+import com.unity3d.ads.IUnityAdsLoadListener;
+import com.unity3d.ads.IUnityAdsShowListener;
+import com.unity3d.ads.UnityAds;
+import com.unity3d.ads.UnityAdsShowOptions;
+import com.unity3d.services.banners.BannerView;
+import com.unity3d.services.banners.UnityBannerSize;
 
-| المكان | الزر | المكافأة |
+@CapacitorPlugin(name = "UnityAds")
+public class UnityAdsPlugin extends Plugin {
+    private String gameId = "YOUR_ANDROID_GAME_ID";
+    private boolean testMode = true; // اجعلها false قبل نشر الإصدار على متجر Play
+    private BannerView banner;
+    private IUnityAdsShowListener showListener(final PluginCall call, final boolean rewarded) {
+        return new IUnityAdsShowListener() {
+            @Override public void onUnityAdsShowComplete(String p, UnityAds.UnityAdsShowCompletionState st) {
+                JSObject r = new JSObject();
+                r.put(rewarded ? "rewarded" : "shown",
+                      st == UnityAds.UnityAdsShowCompletionState.COMPLETED);
+                call.resolve(r);
+            }
+            @Override public void onUnityAdsFailedToShow(String p, UnityAds.UnityAdsShowError e, String m) { call.resolve(); }
+            @Override public void onUnityAdsStart(String p) { }
+            @Override public void onUnityAdsClick(String p) { }
+        };
+    }
+    private IUnityAdsLoadListener loadListener(final String placement, final boolean rewarded, final PluginCall call) {
+        return new IUnityAdsLoadListener() {
+            @Override public void onUnityAdsAdLoaded(String p) {
+                Activity a = bridge.getActivity();
+                UnityAds.show(a, placement, new UnityAdsShowOptions(), showListener(call, rewarded));
+            }
+            @Override public void onUnityAdsFailedToLoad(String p, UnityAds.UnityAdsLoadError e, String m) { call.resolve(); }
+        };
+    }
+    @PluginMethod
+    public void initialize(PluginCall call) {
+        String id = call.getString("gameId");
+        if (id != null && !id.isEmpty()) gameId = id;
+        UnityAds.initialize(getContext(), gameId, new IUnityAdsInitializationListener() {
+            @Override public void onInitializationComplete() { call.resolve(); }
+            @Override public void onInitializationFailed(UnityAds.UnityAdsInitializationError e, String m) { call.reject(m); }
+        }, call.getBoolean("testMode", testMode));
+    }
+    @PluginMethod
+    public void showRewarded(PluginCall call) {
+        if (!UnityAds.isInitialized()) { call.resolve(); return; }
+        String pl = call.getString("placement", "Rewarded_Android");
+        UnityAds.load(pl, loadListener(pl, true, call));
+    }
+    @PluginMethod
+    public void showInterstitial(PluginCall call) {
+        if (!UnityAds.isInitialized()) { call.resolve(); return; }
+        String pl = call.getString("placement", "Interstitial_Android");
+        UnityAds.load(pl, loadListener(pl, false, call));
+    }
+    @PluginMethod
+    public void showBanner(PluginCall call) {
+        String pl = call.getString("placement", "Banner_Android");
+        Activity a = bridge.getActivity();
+        if (banner != null) { banner.destroy(); banner = null; }
+        banner = new BannerView(a, pl, new UnityBannerSize(320, 50));
+        banner.setListener(new BannerView.IListener() { });
+        ViewGroup root = a.findViewById(android.R.id.content);
+        root.addView(banner, new FrameLayout.LayoutParams(
+            ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT,
+            android.view.Gravity.BOTTOM | android.view.Gravity.CENTER_HORIZONTAL));
+        banner.loadBanner();
+        call.resolve();
+    }
+    @PluginMethod
+    public void hideBanner(PluginCall call) {
+        if (banner != null) { banner.destroy(); banner = null; }
+        call.resolve();
+    }
+}
+```
+
+وسجّلها في `MainActivity.java`:
+
+```java
+registerPlugin(UnityAdsPlugin.class);
+```
+
+## الخطوة 3: كيف تتأكد أن الإعلانات تعمل؟
+
+بعد ربط الإضافة، ادخل اللعبة:
+
+- **الإعدادات ← حالة الإعلانات** ستعرض **مفعّلة ✓** مع زر **اختبار** — اضغطه: يظهر إعلان مكافأة حقيقي ثم رسالة "الإعلان يعمل ✓". هذا اختبار الربط الفوري.
+- **الإعلان البيني** (interstitial): أنهِ 4 جولات كاملة دون إحياء — في نهاية الجولة الرابعة يظهر تلقائياً.
+- **البانر**: شريط صغير أسفل شاشة القائمة فقط، ويختفي تماماً بمجرد بدء اللعب.
+
+وقبل ربط الإضافة: تظهر "غير مرتبطة" ولا يوجد أي زر أو شريط إعلانات.
+
+## سياسة عدم الإزعاج (مبنية في كود اللعبة)
+
+| النوع | متى يظهر | الحماية |
 |---|---|---|
-| القائمة الرئيسية | 🎁 (يظهر كل 3 دقائق) | +15 عملة |
-| شاشة نهاية الجولة | استمرار 🎁 | إحياء مجاني مرة واحدة بالجولة |
+| مكافأة Rewarded | فقط بضغطة اللاعب (هدية 🎁 / إحياء) | اختياري دائماً + مؤقّت أمان 20 ث |
+| بيني Interstitial | بعد نهاية الجولة | كل 4 جولات فقط + فاصل دقيقتين على الأقل + لا يظهر بعد إحياء |
+| بانر Banner | شاشة القائمة فقط | يختفي قبل بدء اللعب |
 
-لا نوافذ منبثقة، لا بانرات، لا إعلانات بينية — إعلانات مكافآت فقط، وهذا الأنسب لتقييم جوجل بلا إزعاج.
+- مفتاح **المكافآت الإعلانية** في الإعدادات يوقف الثلاثة فوراً.
+- Game ID يُمرَّر من الإضافة الأصلية، أو عبر `window.UnityAdsGameId`، ووضع الاختبار عبر `window.UnityAdsTestMode`.
+- لا يوجد أي مفتاح API سرّي — Game ID ليس سراً.
 
-## خطوات الربط (أندرويد)
+## ملاحظات أمنية ونشر
 
-1. أنشئ مشروعًا في [Unity Dashboard](https://dashboard.unity3d.com/) → **Monetization** واحصل على **Game ID (Android)** وأنشئ Placement من نوع Rewarded باسم `Rewarded_Android`.
-2. في `android/app/build.gradle` أضف:
-   ```gradle
-   dependencies {
-       implementation 'com.unity3d.ads:unity-ads:4.12.3'
-   }
-   ```
-3. أنشئ `android/app/src/main/java/com/tipsybird/game/UnityAdsPlugin.java`:
-
-   ```java
-   package com.tipsybird.game;
-
-   import com.getcapacitor.JSObject;
-   import com.getcapacitor.Plugin;
-   import com.getcapacitor.PluginCall;
-   import com.getcapacitor.PluginMethod;
-   import com.getcapacitor.annotation.CapacitorPlugin;
-   import com.unity3d.ads.IUnityAdsFinishListener;
-   import com.unity3d.ads.IUnityAdsLoadListener;
-   import com.unity3d.ads.IUnityAdsShowListener;
-   import com.unity3d.ads.UnityAds;
-   import com.unity3d.ads.splash.SplashView; // غير مطلوب، احذفه إن لم تستخدمه
-
-   @CapacitorPlugin(name = "UnityAds")
-   public class UnityAdsPlugin extends Plugin {
-     private static final String GAME_ID = "ضع_معرف_اللعبة_هنا";
-     private String pendingCall;
-
-     @PluginMethod
-     public void showRewarded(PluginCall call) {
-       String placement = call.getString("placement", "Rewarded_Android");
-       pendingCall = call.getCallbackId();
-       UnityAds.load(placement, new IUnityAdsLoadListener() {
-         @Override public void onUnityAdsAdLoaded(String p) {
-           UnityAds.show(getActivity(), p, new IUnityAdsShowListener() {
-             @Override public void onUnityAdsShowComplete(String p, UnityAds.UnityAdsShowCompletionState state) {
-               boolean rewarded = state == UnityAds.UnityAdsShowCompletionState.COMPLETED;
-               PluginCall c = bridge.getSavedCall(pendingCall);
-               if (c != null) { JSObject r = new JSObject(); r.put("rewarded", rewarded); c.resolve(r); }
-             }
-             @Override public void onUnityAdsFailedToShow(String p, UnityAds.UnityAdsShowError e) { resolveFail(); }
-             @Override public void onUnityAdsClick(String p) {}
-             @Override public void onUnityAdsShowStart(String p) {}
-             @Override public void onUnityAdsShowFailure(String p, UnityAds.UnityAdsShowError e) { resolveFail(); }
-           });
-         }
-         @Override public void onUnityAdsFailedToLoad(String p, UnityAds.UnityAdsLoadError e, String msg) { resolveFail(); }
-         private void resolveFail() {
-           PluginCall c = bridge.getSavedCall(pendingCall);
-           if (c != null) c.reject("ad_failed");
-         }
-       });
-     }
-   }
-   ```
-
-4. سجّل الإضافة في `MainActivity.java`:
-   ```java
-   registerPlugin(UnityAdsPlugin.class);
-   ```
-5. شغّل `npx cap sync android` (تلقائي في الـ workflow).
-
-## ملاحظات امتثال مهمة
-
-- **GDPR/خصوصية**: Unity Ads يعرض بنر الموافقة الخاص به في المناطق الأوروبية تلقائيًا عند تهيئة `UnityAds.initialize()`. ننصح باستدعاء `initialize` مع `testMode=false` فقط في نسخة الإنتاج.
-- **استهدف الأطفال**: اللعبة مناسبة للعائلات؛ عند ملء استبيان محتوى Play اختر التصنيف المناسب، وأعلن عن جمع بيانات الإعلانات في نموذج "أمان البيانات".
-- لا تضع Game ID في أي مستودع عام حساس — هو ليس سرًا (معلن في الـ SDK أصلًا)، لكن الأفضل وضعه في `strings.xml`.
-
-## كيف تتأكد أن الإعلانات تعمل؟
-
-- عند ربط الإضافة الأصلية أعلاه، ستظهر في **الإعدادات ← حالة الإعلانات** كلمة **مفعّلة ✓** مع زر **اختبار** يعرض إعلاناً حقيقياً ويرد "الإعلان يعمل ✓".
-- إذا لم تُربط الإضافة بعد، ستظهر **غير مرتبطة** ولا يظهر أي زر إعلانات في اللعبة (لا شيء مزعج).
-- الإعلانات كلها **مكافآت اختيارية** يبدأها اللاعب بنفسه: هدية يومية 🎁، وإحياء مجاني — لا إعلانات قسرية ولا بانرات.
-
+- تأكد أن Protobuf 3.25.6+ يأتي كتركيبة تبعية SDK (توصية أمنية من Unity).
+- **Test mode ON** أثناء التجربة، **OFF** قبل رفع الإصدار إلى Google Play.
+- إن رغبت لاحقاً بالوساطة (AdMob + Meta + غيرها) فالحل Unity LevelPlay — الحاجة وقتها تغيير الإضافة الأصلية فقط؛ واجهة اللعبة (JS) لن تتغير.

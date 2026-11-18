@@ -114,7 +114,7 @@ if(!window.THREE){$('#s-load').innerHTML='<h1 class="logo" style="font-size:32px
 const S={LOADING:0,MENU:1,READY:2,PLAYING:3,PAUSED:4,OVER:5};
 let state=S.LOADING;
 /* ---------- storage ---------- */
-const St={d:{bests:[0,0,0],diff:1,coins:0,lang:null,map:0,skin:0,own:[0],dr:null,ms:null,mi:null,boost:{shield:0,magnet:0,slow:0,double:0,flapPower:0,flapSoft:0,wide:0,magLong:0,slowLong:0,coinPipe:0,headStart:0,mystery:0,eagleRun:0,safeRun:0,pfx2:0},arm:null,adT:0,revT:0,pop:true,hint:true,ads:true,fv:1,perm:{magnet:false,safe:false,gap:false,coin:false,lvlShield:false,eagle:false,perfCoin:false},sv:1,mv:1,vib:true,shk:true,fps:false,sfx:true,music:true,low:false},
+const St={d:{bests:[0,0,0],diff:1,coins:0,lang:null,map:0,skin:0,own:[0],dr:null,ms:null,mi:null,boost:{shield:0,magnet:0,slow:0,double:0,flapPower:0,flapSoft:0,wide:0,magLong:0,slowLong:0,coinPipe:0,headStart:0,mystery:0,eagleRun:0,safeRun:0,pfx2:0},arm:null,adT:0,revT:0,ioC:0,ioT:0,pop:true,hint:true,ads:true,fv:1,perm:{magnet:false,safe:false,gap:false,coin:false,lvlShield:false,eagle:false,perfCoin:false},sv:1,mv:1,vib:true,shk:true,fps:false,sfx:true,music:true,low:false},
  load(){try{Object.assign(this.d,JSON.parse(localStorage.getItem('tipsy3d')||'{}'))}catch(e){}},
  save(){try{localStorage.setItem('tipsy3d',JSON.stringify(this.d))}catch(e){}}};
 St.load();
@@ -400,7 +400,7 @@ function reset(){magT=slowT=0;dbl=false;revived=false;shopOn=false;score=0;RF={f
 function ui(){const on=(id,v)=>$('#'+id).classList.toggle('on',v);
  on('s-menu',state===S.MENU&&!shopOn);on('s-shop',state===S.MENU&&shopOn);on('s-hud',state>=S.READY&&state<=S.PAUSED);on('s-pause',state===S.PAUSED);on('s-over',state===S.OVER&&shown);
  $('#s-hud').classList.toggle('rdy',state===S.READY&&St.d.hint!==false)}
-function setState(s){state=s;ui()}
+function setState(s){state=s;ui();umbn()}
 const vib=n=>{if(St.d.vib&&navigator.vibrate)try{navigator.vibrate(n)}catch(e){}};
 function say(m){if(St.d.pop===false)return;$('#combo').textContent=m;$('#combo').animate([{opacity:1,transform:'translateY(0) scale(1.3)'},{opacity:0,transform:'translateY(-40px) scale(1)'}],{duration:900,easing:'ease-out'})}
 function coin(){const n=dbl?2:1;St.d.coins+=n;mAdd('coins',1);St.save();$('#coins').textContent='🪙 '+St.d.coins;Au.coin();emit(BX+.3,B.y,.5,8,[0xffd23f,0xfff3a0],3.5,3,6);vib(10)}
@@ -441,7 +441,7 @@ function step(dt){t+=dt;
   if(overT>.9&&!shown){shown=true;B.o1=0;$('#fs').textContent=score;$('#medal').textContent=score>=40?'🥇':score>=25?'🥈':score>=10?'🥉':'';$$('.bestv').forEach(e=>e.textContent=bestV());
    $('#newb').style.display=newRec?'':'none';const rb=$('#bRev');rb.style.display=!revived&&(St.d.coins>=REV||St.d.revT>0)?'':'none';rb.textContent=St.d.revT>0?T('استمرار مجاني')+(St.d.revT>1?' ×'+St.d.revT:''):T('تابع')+' · 🪙 '+REV;const ra=$('#bRevAd');ra.style.display=!revived&&UA.ok&&St.d.ads!==false?'':'none';ra.textContent=T('استمرار')+' 🎁';
    {const inc=Math.max(0,Math.floor(score/2)-Math.floor(rwdBase/2));if(inc>0){addCoins(inc);toast((L==='en'?'Coins from score +':'عملات من النقاط +')+inc+' 🪙')}rwdBase=score}
-   {const mx=mb();if(score>(mx.bs||0)){mx.bs=score;St.save()}}if(newRec){Au.win();emit(0,5,0,80,[0xff4f7b,0xffd23f,0x27c1b0,0x6c8cff,0xffffff],7,5,5)}ui()}
+   {const mx=mb();if(score>(mx.bs||0)){mx.bs=score;St.save()}}if(newRec){Au.win();emit(0,5,0,80,[0xff4f7b,0xffd23f,0x27c1b0,0x6c8cff,0xffffff],7,5,5)}if(!revived&&UA.okIn&&St.d.ads!==false){const c=(St.d.ioC=(St.d.ioC||0)+1);if(c%INT_EVERY===0&&Date.now()-(St.d.ioT||0)>=INT_COOL){St.d.ioT=Date.now();St.save();UA.showIn(IN_PLACE,function(){})}}ui()}
  }else{B.y=1.2+Math.sin(t*3.2)*.18;B.vy=0}}
 function visual(dt){
  const menu=state===S.MENU,k=Math.min(1,dt*5);curX+=((menu?0:BX)-curX)*k;curS+=((menu?1.55:1.15)-curS)*k;curO+=((menu?(shopOn?1.6:-.2):0)-curO)*k;
@@ -477,7 +477,7 @@ function frame(ms){requestAnimationFrame(frame);const now=ms/1000;if(last==null)
 function resize(){const w=innerWidth,h=innerHeight;R.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix();halfW=Math.tan(Math.PI/6)*14*cam.aspect}
 function quality(){const lo=St.d.low;wg.setDrawRange(0,lo?40:100);R.setPixelRatio(lo?1:Math.min(devicePixelRatio||1,2));R.shadowMap.enabled=!lo;sun.castShadow=!lo;
  sc.traverse(o=>{if(o.material)o.material.needsUpdate=true});resize()}
-function sync(){$$('.sw').forEach(b=>b.classList.toggle('on',!!St.d[b.dataset.k]));$('#bSnd').textContent=St.d.sfx||St.d.music?'🔊':'🔇';$$('.bestv').forEach(e=>e.textContent=bestV());$$('[data-d]').forEach(b=>b.classList.toggle('on',+b.dataset.d===St.d.diff));$$('[data-m]').forEach(b=>b.classList.toggle('on',+b.dataset.m===St.d.map));$$('.coinv').forEach(e=>e.textContent=St.d.coins);$('#fps').style.display=St.d.fps?'block':'none';$('#coins').textContent='🪙 '+St.d.coins;Au.vol();syncMusic();mBadge();adStatus();maybeAdGift()}
+function sync(){$$('.sw').forEach(b=>b.classList.toggle('on',!!St.d[b.dataset.k]));$('#bSnd').textContent=St.d.sfx||St.d.music?'🔊':'🔇';$$('.bestv').forEach(e=>e.textContent=bestV());$$('[data-d]').forEach(b=>b.classList.toggle('on',+b.dataset.d===St.d.diff));$$('[data-m]').forEach(b=>b.classList.toggle('on',+b.dataset.m===St.d.map));$$('.coinv').forEach(e=>e.textContent=St.d.coins);$('#fps').style.display=St.d.fps?'block':'none';$('#coins').textContent='🪙 '+St.d.coins;Au.vol();syncMusic();mBadge();adStatus();maybeAdGift();umbn()}
 /* ---------- controls ---------- */
 const pause=()=>{if(state===S.PLAYING)setState(S.PAUSED)},resume=()=>{if(state===S.PAUSED){hold=.7;setState(S.PLAYING)}};
 const go=(fn,blip)=>e=>{Au.init();if(blip!==0)Au.click();e.currentTarget.blur();fn()};
@@ -508,13 +508,22 @@ document.addEventListener('contextmenu',e=>e.preventDefault());
 document.addEventListener('visibilitychange',()=>{if(document.hidden){pause();Au.music(false);if(Au.c)Au.c.suspend()}else{last=null;if(Au.c)Au.c.resume();syncMusic()}});
 addEventListener('blur',pause);addEventListener('resize',resize);addEventListener('orientationchange',()=>setTimeout(resize,200));
 /* ---------- Unity Ads bridge (rewarded only, user-initiated) ---------- */
-const AD_GIFT=15,AD_COOL=180000,AD_PLACE='Rewarded_Android';
-const UA={P:null,ok:false,
- init(){try{const C=window.Capacitor;this.P=C&&C.Plugins&&C.Plugins.UnityAds||null;this.ok=!!(this.P&&this.P.showRewarded);
-  if(this.ok&&this.P.initialize)try{Promise.resolve(this.P.initialize({gameId:window.UnityAdsGameId||null,testMode:false})).catch(()=>{})}catch(e){}}catch(e){this.ok=false}},
+const AD_GIFT=15,AD_COOL=180000,AD_PLACE='Rewarded_Android',IN_PLACE='Interstitial_Android',BN_PLACE='Banner_Android',INT_EVERY=4,INT_COOL=120000;
+const UA={P:null,ok:false,okIn:false,okBn:false,
+ init(){try{const C=window.Capacitor;this.P=C&&C.Plugins&&C.Plugins.UnityAds||null;
+  this.ok=!!(this.P&&this.P.showRewarded);this.okIn=!!(this.P&&this.P.showInterstitial);this.okBn=!!(this.P&&(this.P.showBanner||this.P.hideBanner));
+  if(this.P&&this.P.initialize)try{Promise.resolve(this.P.initialize({gameId:window.UnityAdsGameId||null,testMode:!!window.UnityAdsTestMode})).catch(()=>{})}catch(e){}
+  umbn()}catch(e){this.ok=false}},
  show(pl,cb){if(!this.ok){cb(false);return}
   let done=false;const fin=r=>{if(done)return;done=true;cb(!!(r&&r.rewarded))};const tm=setTimeout(()=>fin(null),20000);
-  Promise.resolve(this.P.showRewarded({placement:pl})).then(r=>{clearTimeout(tm);fin(r)}).catch(()=>{clearTimeout(tm);fin(null)})}};
+  Promise.resolve(this.P.showRewarded({placement:pl})).then(r=>{clearTimeout(tm);fin(r)}).catch(()=>{clearTimeout(tm);fin(null)})},
+ showIn(pl,cb){if(!this.okIn){cb(false);return}
+  let done=false;const fin=r=>{if(done)return;done=true;cb(!!(r&&r.shown))};const tm=setTimeout(()=>fin(null),15000);
+  Promise.resolve(this.P.showInterstitial({placement:pl})).then(r=>{clearTimeout(tm);fin(r)}).catch(()=>{clearTimeout(tm);fin(null)})}};
+let bnOn=false;
+function umbn(){const want=UA.okBn&&St&&St.d&&St.d.ads!==false&&state===S.MENU;
+ if(want&&!bnOn){bnOn=true;try{UA.P.showBanner({placement:BN_PLACE,position:'bottom'})}catch(e){}}
+ else if(!want&&bnOn){bnOn=false;try{UA.P.hideBanner()}catch(e){}}}
 UA.init();
 function adStatus(){const el=$('#adSt');if(!el)return;el.textContent=UA.ok?T('مفعّلة ✓'):(L==='en'?'Not linked':'غير مرتبطة');$('#bAdTest').style.display=UA.ok&&St.d.ads!==false?'':'none'}
 
