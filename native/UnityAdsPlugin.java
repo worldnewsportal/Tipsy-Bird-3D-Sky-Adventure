@@ -15,6 +15,7 @@ import com.unity3d.ads.IUnityAdsInitializationListener;
 import com.unity3d.ads.IUnityAdsLoadListener;
 import com.unity3d.ads.IUnityAdsShowListener;
 import com.unity3d.ads.UnityAds;
+import com.unity3d.ads.UnityAdsLoadOptions;
 import com.unity3d.ads.UnityAdsShowOptions;
 import com.unity3d.services.banners.BannerErrorInfo;
 import com.unity3d.services.banners.BannerView;
@@ -37,15 +38,15 @@ public class UnityAdsPlugin extends Plugin {
             }
 
             @Override
-            public void onUnityAdsFailedToShow(String placement, UnityAds.UnityAdsShowError error, String message) {
+            public void onUnityAdsShowFailure(String placement, UnityAds.UnityAdsShowError error, String message) {
                 call.resolve();
             }
 
             @Override
-            public void onUnityAdsStart(String placement) { }
+            public void onUnityAdsShowStart(String placement) { }
 
             @Override
-            public void onUnityAdsClick(String placement) { }
+            public void onUnityAdsShowClick(String placement) { }
         };
     }
 
@@ -129,7 +130,7 @@ public class UnityAdsPlugin extends Plugin {
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT,
                 Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL));
         banner = b;
-        b.loadBanner();
+        b.load(new UnityAdsLoadOptions());
         call.resolve();
     }
 

@@ -6,7 +6,7 @@ cd "$(dirname "$0")/.."
 
 APP_ID=$(node -p "require('./capacitor.config.json').appId")
 APP=android/app/src/main
-JAVA_DIR=$APP/java/$APP_ID
+JAVA_DIR=$APP/java/$(printf '%s' "$APP_ID" | tr '.' '/')
 
 if [ ! -d android ]; then
   echo "ERROR: android/ project missing (cap add must run first)"; exit 1
