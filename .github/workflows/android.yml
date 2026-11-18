@@ -23,14 +23,15 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Prepare web files (offline Three.js)
+      - name: Prepare web files (fully offline)
         run: |
           mkdir -p www
           cp src/index.html www/index.html
-          cp node_modules/three/build/three.min.js www/three.min.js
-          sed -i 's#https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js#three.min.js#' www/index.html
-          sed -i '/fonts.googleapis.com/d' www/index.html
-          grep -q 'src="three.min.js"' www/index.html
+          cp -r src/vendor www/vendor
+          grep -q 'src="vendor/three.min.js"' www/index.html
+          if grep -qE '(src|href)="https?://|url\(https?://' www/index.html; then
+            echo 'External URL found in web files'; exit 1
+          fi
 
       - name: Create Android project
         run: |

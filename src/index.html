@@ -4,8 +4,11 @@ src<!DOCTYPE html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <title>الطائر الطائش 3D</title>
-<link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@600;800&display=swap" rel="stylesheet">
 <style>
+@font-face{font-family:'Baloo Bhaijaan 2';font-style:normal;font-weight:600;font-display:swap;src:url('vendor/fonts/baloo-bhaijaan-2-arabic-600-normal.woff2') format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-088E,U+0890-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC}
+@font-face{font-family:'Baloo Bhaijaan 2';font-style:normal;font-weight:800;font-display:swap;src:url('vendor/fonts/baloo-bhaijaan-2-arabic-800-normal.woff2') format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-088E,U+0890-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC}
+@font-face{font-family:'Baloo Bhaijaan 2';font-style:normal;font-weight:600;font-display:swap;src:url('vendor/fonts/baloo-bhaijaan-2-latin-600-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Baloo Bhaijaan 2';font-style:normal;font-weight:800;font-display:swap;src:url('vendor/fonts/baloo-bhaijaan-2-latin-800-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
 :root{--ink:#3a2a5c;--cream:#fff6dc;--org:#ff7a2f;--orgd:#c4480f;--teal:#27c1b0;--teald:#13867a;--sk:env(safe-area-inset-top,0px);--sb:env(safe-area-inset-bottom,0px)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
 html,body{margin:0;height:100%;overflow:hidden;overscroll-behavior:none;touch-action:none;background:#8fdcff;font-family:'Baloo Bhaijaan 2','Segoe UI',Tahoma,sans-serif;color:var(--ink)}
@@ -80,7 +83,7 @@ input[type=range]{pointer-events:auto;width:120px;accent-color:var(--teal)}
   <div class="new" id="newb">🏆 رقم قياسي جديد!</div>
   <div id="medal" style="font-size:46px;min-height:50px"></div><div>النتيجة</div><div class="big-n" id="fs">0</div>
   <div class="chip" style="align-self:center">الأفضل: <span class="bestv">0</span></div>
-  <button class="btn t" id="bRev" style="display:none"></button><button class="btn" id="bAgain">العب مرة أخرى</button><div style="display:flex;gap:10px"><button class="btn t sm" id="bShare" style="flex:1">مشاركة النتيجة</button><button class="btn t sm" id="bMenu2" style="flex:1">القائمة</button></div></div></section>
+  <button class="btn t" id="bRev" style="display:none"></button><button class="btn" id="bAgain">العب مرة أخرى</button><button class="btn t" id="bMenu2">القائمة</button></div></section>
  <section class="scr" id="s-daily"><div class="card"><h2>مكافأة يومية</h2><div id="drTxt"></div><div class="big-n" id="drAmt">+15</div><button class="btn" id="bClaim">استلم</button></div></section>
  <section class="scr" id="s-miss"><div class="card"><h2>المهام اليومية</h2><div id="mlist" style="display:flex;flex-direction:column;gap:8px"></div><button class="btn" id="bMissX">رجوع</button></div></section>
  <section class="scr" id="s-shop" style="justify-content:flex-end"><div class="card" style="max-height:54vh;width:min(94vw,420px)"><h2>المتجر</h2><div class="chip" style="align-self:center">🪙 <span class="coinv">0</span></div><div id="grid"></div><button class="btn" id="bShopX">رجوع</button></div></section>
@@ -97,11 +100,11 @@ input[type=range]{pointer-events:auto;width:120px;accent-color:var(--teal)}
   <div class="row"><span>اللغة</span><button class="btn t sm" id="bLang" style="width:auto">English</button></div><button class="btn" id="bDone">تم</button></div></section>
 </div>
 <div id="flash"></div><div id="toast"></div><div id="combo"></div><div id="fps"></div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="vendor/three.min.js"></script>
 <script>
 (()=>{
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
-if(!window.THREE){$('#s-load').innerHTML='<h1 class="logo" style="font-size:32px;animation:none">Could not load engine — check connection · تعذّر تحميل المحرك</h1>';return}
+if(!window.THREE){$('#s-load').innerHTML='<h1 class="logo" style="font-size:32px;animation:none">تعذّر تشغيل المحرك · Engine failed to start</h1>';return}
 const S={LOADING:0,MENU:1,READY:2,PLAYING:3,PAUSED:4,OVER:5};
 let state=S.LOADING;
 /* ---------- storage ---------- */
@@ -112,7 +115,7 @@ St.load();
 const DF=[{g0:4.4,gm:3.4,s0:3.5,sm:6,ac:.07},{g0:3.9,gm:2.9,s0:4,sm:7,ac:.09},{g0:3.5,gm:2.6,s0:4.8,sm:9,ac:.13}];
 const bestV=()=>St.d.bests[St.d.diff];
 let L=St.d.lang||((navigator.language||'en').toLowerCase().startsWith('ar')?'ar':'en');
-const EN={'جارٍ التحميل…':'Loading…','الطائر':'Tipsy','الطائش':'Bird','الأفضل:':'Best:','سهل':'Easy','عادي':'Normal','صعب':'Hard','المروج':'Meadow','الصحراء':'Desert','القطب':'Arctic','العب':'Play','الإعدادات':'Settings','👆 المس الشاشة للطيران':'👆 Tap to flap','إيقاف مؤقت':'Paused','المؤثرات':'Sound FX','الموسيقى':'Music','أداء منخفض':'Low-power mode','استئناف':'Resume','إعادة':'Restart','القائمة':'Menu','انتهت اللعبة':'Game Over','🏆 رقم قياسي جديد!':'🏆 New record!','النتيجة':'Score','العب مرة أخرى':'Play again','مشاركة النتيجة':'Share score','تم':'Done','اللغة':'Language','السرعة':'Speed','أنقذك الدرع!':'Shield saved you!','درع!':'Shield!','مثالي':'Perfect','كومبو!':'Combo!','المستوى':'Level','تم تفعيل وضع الأداء المنخفض':'Low-power mode enabled','تم نسخ النتيجة':'Score copied','المتجر':'Shop','رجوع':'Back','تابع':'Continue','عملات غير كافية':'Not enough coins','تم الشراء!':'Purchased!','مستوى المؤثرات':'SFX volume','مستوى الموسيقى':'Music volume','الاهتزاز':'Vibration','اهتزاز الكاميرا':'Screen shake','عرض FPS':'Show FPS','حذف التقدّم':'Reset progress','حذف':'Delete','هل تريد حذف كل التقدم؟':'Delete all progress?','كلاسيكي':'Classic','أزرق':'Bluey','وردي':'Rosy','نعناعي':'Mint','الظل':'Shadow','ثلجي':'Snowy','الروبوت':'Robot','ناري':'Blaze','الملاك':'Angel','الملك':'King','مغناطيس!':'Magnet!','بطيء!':'Slow-mo!','المهام اليومية':'Daily missions','مكافأة يومية':'Daily reward','استلم':'Claim','اليوم':'Day'};
+const EN={'جارٍ التحميل…':'Loading…','الطائر':'Tipsy','الطائش':'Bird','الأفضل:':'Best:','سهل':'Easy','عادي':'Normal','صعب':'Hard','المروج':'Meadow','الصحراء':'Desert','القطب':'Arctic','العب':'Play','الإعدادات':'Settings','👆 المس الشاشة للطيران':'👆 Tap to flap','إيقاف مؤقت':'Paused','المؤثرات':'Sound FX','الموسيقى':'Music','أداء منخفض':'Low-power mode','استئناف':'Resume','إعادة':'Restart','القائمة':'Menu','انتهت اللعبة':'Game Over','🏆 رقم قياسي جديد!':'🏆 New record!','النتيجة':'Score','العب مرة أخرى':'Play again','تم':'Done','اللغة':'Language','السرعة':'Speed','أنقذك الدرع!':'Shield saved you!','درع!':'Shield!','مثالي':'Perfect','كومبو!':'Combo!','المستوى':'Level','تم تفعيل وضع الأداء المنخفض':'Low-power mode enabled','المتجر':'Shop','رجوع':'Back','تابع':'Continue','عملات غير كافية':'Not enough coins','تم الشراء!':'Purchased!','مستوى المؤثرات':'SFX volume','مستوى الموسيقى':'Music volume','الاهتزاز':'Vibration','اهتزاز الكاميرا':'Screen shake','عرض FPS':'Show FPS','حذف التقدّم':'Reset progress','حذف':'Delete','هل تريد حذف كل التقدم؟':'Delete all progress?','كلاسيكي':'Classic','أزرق':'Bluey','وردي':'Rosy','نعناعي':'Mint','الظل':'Shadow','ثلجي':'Snowy','الروبوت':'Robot','ناري':'Blaze','الملاك':'Angel','الملك':'King','مغناطيس!':'Magnet!','بطيء!':'Slow-mo!','المهام اليومية':'Daily missions','مكافأة يومية':'Daily reward','استلم':'Claim','اليوم':'Day'};
 const T=s=>L==='en'&&EN[s]||s;
 function lvlTxt(){const f=DF[St.d.diff];$('#lvl').textContent=T('السرعة')+' ×'+(Math.min(f.sm,f.s0+score*f.ac)/4).toFixed(1)}
 function applyLang(){const h=document.documentElement;h.lang=L;h.dir=L==='ar'?'rtl':'ltr';document.title=L==='ar'?'الطائر الطائش 3D':'Tipsy Bird 3D';
@@ -383,7 +386,6 @@ bind('#bWipe',()=>{if(confirm(T('هل تريد حذف كل التقدم؟'))){tr
 $$('[data-r]').forEach(r=>{r.value=St.d[r.dataset.r];r.addEventListener('input',()=>{St.d[r.dataset.r]=+r.value;St.save();Au.vol()});r.addEventListener('change',()=>{Au.init();Au.click()})});
 const CA=window.Capacitor&&Capacitor.Plugins&&Capacitor.Plugins.App;
 if(CA&&CA.addListener){CA.addListener('backButton',()=>{if($('#s-miss').classList.contains('on'))$('#s-miss').classList.remove('on');else if($('#s-set').classList.contains('on'))openSet(false);else if(shopOn){shopOn=false;ui()}else if(state===S.PLAYING)pause();else if(state===S.PAUSED)resume();else if(state===S.READY||state===S.OVER)toMenu();else CA.exitApp()});CA.addListener('appStateChange',s=>{if(!s.isActive)pause()})}
-bind('#bShare',()=>{const m=L==='en'?'I scored '+score+' in Tipsy Bird 3D 🐤 Can you beat me?':'حققت '+score+' نقطة في الطائر الطائش 3D 🐤 هل تتفوق عليّ؟';if(navigator.share)navigator.share({text:m,url:location.href}).catch(()=>{});else if(navigator.clipboard){navigator.clipboard.writeText(m+' '+location.href);toast(T('تم نسخ النتيجة'))}});
 bind('#bPlay',toReady);bind('#bSet',()=>openSet(true));bind('#bDone',()=>openSet(false));bind('#bPause',pause);bind('#bRes',resume);
 bind('#bRst',toReady);bind('#bAgain',toReady);bind('#bMenu1',toMenu);bind('#bMenu2',toMenu);
 bind('#bSnd',()=>{const on=!(St.d.sfx||St.d.music);St.d.sfx=St.d.music=on;St.save();sync()});
