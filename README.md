@@ -2,6 +2,9 @@
 
 اللعبة تعمل 100% دون إنترنت: محرك Three.js والخطوط مضمّنة في `src/vendor/`.
 
+- دليل ربط Unity Ads (إعلانات مكافآت اختيارية): `docs/UNITY_ADS.md`
+- قائمة جاهزية Google Play: `docs/PLAY_STORE.md`
+
 1. Create a new GitHub repository and upload ALL files of this folder (keep `.github/workflows/android.yml`).
 2. Push to `main` (or run the workflow manually from the Actions tab).
 3. When it finishes, open the run and download the artifact **TipsyBird3D-apk**.
