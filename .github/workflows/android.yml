@@ -8,6 +8,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -80,6 +82,24 @@ jobs:
           export KS_PASS
           $BT/apksigner sign --ks release.jks --ks-key-alias $KEY_ALIAS --ks-pass env:KS_PASS --out TipsyBird3D.apk aligned.apk
           $BT/apksigner verify TipsyBird3D.apk
+
+      - name: Share APK (release + direct link)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="build-${{ github.run_number }}"
+          NOTES="APK جاهز بميزة الإعلانات (Unity Ads 4.22.0) — بناء #${{ github.run_number }} (${GITHUB_REF_NAME})"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" TipsyBird3D.apk --clobber
+            gh release edit "$TAG" --latest
+          else
+            gh release create "$TAG" TipsyBird3D.apk --title "Tipsy Bird 3D — Build #${{ github.run_number }}" --notes "$NOTES" --latest
+          fi
+          URL=$(gh release view "$TAG" --repo $GITHUB_REPOSITORY --json url -q .url)
+          echo "APK shared: $URL" >> "$GITHUB_STEP_SUMMARY"
+          echo "### رابط مشاركة الـ APK" >> "$GITHUB_STEP_SUMMARY"
+          echo "$URL" >> "$GITHUB_STEP_SUMMARY"
+          echo "رابط مباشر: https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG/TipsyBird3D.apk" >> "$GITHUB_STEP_SUMMARY"
 
       - uses: actions/upload-artifact@v4
         with:
