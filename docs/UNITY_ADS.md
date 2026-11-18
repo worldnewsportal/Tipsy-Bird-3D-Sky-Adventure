@@ -12,7 +12,7 @@
 
 1. [dash.unity3d.com](https://dash.unity3d.com) → **Monetization → Projects → Add new project**
 2. اكتب اسم المشروع و الحزمة نفسها الموجودة في `android/app/build.gradle` (applicationId)
-3. **Monetization Setup → Android** → انسخ **Game ID (Android)**
+3. **Monetization Setup → Android** → **Game ID (Android)** — لعبتك: `800443610` (أُضيف في الكود مسبقاً)
 4. فعّل **Test mode** في البداية حتى تتحقق، وأوقفه قبل رفع الإصدار النهائي للنشر
 5. الخانات الجاهزة تكفي: `Rewarded_Android`, `Interstitial_Android`, `Banner_Android`
 
@@ -47,7 +47,7 @@ import com.unity3d.services.banners.UnityBannerSize;
 
 @CapacitorPlugin(name = "UnityAds")
 public class UnityAdsPlugin extends Plugin {
-    private String gameId = "YOUR_ANDROID_GAME_ID";
+    private String gameId = "800443610";
     private boolean testMode = true; // اجعلها false قبل نشر الإصدار على متجر Play
     private BannerView banner;
     private IUnityAdsShowListener showListener(final PluginCall call, final boolean rewarded) {
@@ -140,7 +140,7 @@ registerPlugin(UnityAdsPlugin.class);
 | بانر Banner | شاشة القائمة فقط | يختفي قبل بدء اللعب |
 
 - مفتاح **المكافآت الإعلانية** في الإعدادات يوقف الثلاثة فوراً.
-- Game ID يُمرَّر من الإضافة الأصلية، أو عبر `window.UnityAdsGameId`، ووضع الاختبار عبر `window.UnityAdsTestMode`.
+- الـ Game ID (`800443610`) مدموج في كود اللعبة، ويمكن تجاوزه عبر `window.UnityAdsGameId`، ووضع الاختبار عبر `window.UnityAdsTestMode` (افتراضياً: إنتاج).
 - لا يوجد أي مفتاح API سرّي — Game ID ليس سراً.
 
 ## ملاحظات أمنية ونشر

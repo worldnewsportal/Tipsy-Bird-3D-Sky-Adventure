@@ -512,7 +512,7 @@ const AD_GIFT=15,AD_COOL=180000,AD_PLACE='Rewarded_Android',IN_PLACE='Interstiti
 const UA={P:null,ok:false,okIn:false,okBn:false,
  init(){try{const C=window.Capacitor;this.P=C&&C.Plugins&&C.Plugins.UnityAds||null;
   this.ok=!!(this.P&&this.P.showRewarded);this.okIn=!!(this.P&&this.P.showInterstitial);this.okBn=!!(this.P&&(this.P.showBanner||this.P.hideBanner));
-  if(this.P&&this.P.initialize)try{Promise.resolve(this.P.initialize({gameId:window.UnityAdsGameId||null,testMode:!!window.UnityAdsTestMode})).catch(()=>{})}catch(e){}
+  if(this.P&&this.P.initialize)try{Promise.resolve(this.P.initialize({gameId:window.UnityAdsGameId||'800443610',testMode:!!window.UnityAdsTestMode})).catch(()=>{})}catch(e){}
   umbn()}catch(e){this.ok=false}},
  show(pl,cb){if(!this.ok){cb(false);return}
   let done=false;const fin=r=>{if(done)return;done=true;cb(!!(r&&r.rewarded))};const tm=setTimeout(()=>fin(null),20000);
