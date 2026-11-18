@@ -21,11 +21,25 @@ if ! grep -q 'com.unity3d.ads:unity-ads' "$G"; then
   sed -i "0,/dependencies {/s//dependencies {\n    implementation 'com.unity3d.ads:unity-ads:4.22.0'/" "$G"
 fi
 
-# 2) Register plugin in MainActivity (same package, no import needed)
+# 2) Register plugin in MainActivity (rewrite canonically; cap add generates an empty class)
 M=$(find $APP/java -name MainActivity.java)
-if ! grep -q 'registerPlugin(UnityAdsPlugin.class)' "$M"; then
-  sed -i 's/super.onCreate(savedInstanceState);/super.onCreate(savedInstanceState);\n        registerPlugin(UnityAdsPlugin.class);/' "$M"
+if [ -z "$M" ]; then
+  echo "ERROR: MainActivity.java not found"; exit 1
 fi
+cat > "$M" <<JAVA
+package $APP_ID;
+
+import android.os.Bundle;
+import com.getcapacitor.BridgeActivity;
+
+public class MainActivity extends BridgeActivity {
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        registerPlugin(UnityAdsPlugin.class);
+    }
+}
+JAVA
 
 echo "--- verifying native ad integration ---"
 grep -q 'com.unity3d.ads:unity-ads:4.22.0' "$G" || { echo "FAIL: gradle dependency missing"; exit 1; }
