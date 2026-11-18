@@ -38,6 +38,9 @@ jobs:
           npx cap add android
           npx cap sync android
 
+      - name: Inject native Unity Ads plugin
+        run: bash native/inject_native.sh
+
       - name: Customize Android project
         run: |
           RES=android/app/src/main/res
