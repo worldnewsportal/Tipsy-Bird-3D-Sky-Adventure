@@ -138,9 +138,14 @@ input[type=range]{pointer-events:auto;width:120px;accent-color:var(--teal)}
   <div class="row"><span>اللغة</span><button class="btn t sm" id="bLang" style="width:auto">English</button></div><button class="btn" id="bDone">تم</button></div></section>
  <section class="scr" id="s-mp"><div class="card" style="max-height:74vh;width:min(94vw,420px)"><h2>اللعب مع الأصدقاء</h2>
   <div class="row"><span>الاسم</span><input type="text" id="mpName" maxlength="12"></div>
-  <div id="mpHome" style="display:flex;flex-direction:column;gap:10px"><button class="btn" id="bMpHost">إنشاء غرفة</button><button class="btn t" id="bMpJoinT">دخول برمز</button></div>
+  <div id="mpHome" style="display:flex;flex-direction:column;gap:10px"><button class="btn" id="bMpHost">إنشاء غرفة</button><button class="btn t" id="bMpJoinT">دخول برمز</button><button class="btn t" id="bBtH">بلوتوث — استضافة</button><button class="btn t" id="bBtJ">بلوتوث — انضم لجهاز قريب</button></div>
   <div id="mpJoinB" style="display:none;flex-direction:column;gap:10px"><input type="text" id="mpCode" maxlength="5" placeholder="XXXXX" autocomplete="off"><div style="display:flex;gap:10px"><button class="btn" id="bMpJoin">دخول</button><button class="btn t" id="bMpJoinX">رجوع</button></div></div>
-  <div id="mpRoomB" style="display:none;flex-direction:column;gap:10px"><div id="mpStatus" style="text-align:center;font-size:13px;color:#9fb6d8"></div><div class="chip" style="align-self:center">رمز الغرفة: <b id="mpRoom" class="big-n" style="letter-spacing:.3em">-----</b></div><div id="mpPlayers" style="display:flex;flex-direction:column;gap:6px;min-height:44px"></div><button class="btn" id="bMpStart" style="display:none">ابدأ السباق</button><div id="mpWait" style="display:none;color:#ffd97a;font-size:14px;text-align:center">بانتظار المضيف للبدء…</div><button class="btn t" id="bMpLeave">خروج</button></div>
+  <div id="mpRoomB" style="display:none;flex-direction:column;gap:10px"><div id="mpStatus" style="text-align:center;font-size:13px;color:#9fb6d8"></div><div class="chip" style="align-self:center">رمز الغرفة: <b id="mpRoom" class="big-n" style="letter-spacing:.3em">-----</b></div><div id="mpPlayers" style="display:flex;flex-direction:column;gap:6px;min-height:44px"></div><button class="btn" id="bMpStart" style="display:none">ابدأ السباق</button><div id="mpWait" style="display:none;color:#ffd97a;font-size:14px;text-align:center">بانتظار المضيف للبدء…</div><button class="btn t" id="bBtVis" style="display:none">اجعل جهازك مرئيًا 5 دقائق</button><button class="btn t" id="bMpLeave">خروج</button></div>
+  <div id="mpBt" style="display:none;flex-direction:column;gap:10px">
+   <div style="text-align:center;font-size:13px;color:#9fb6d8">اختر الجهاز الآخر — للربط الأول قرِّب الهاتفين من إعدادات البلوتوث</div>
+   <div id="mpBtList" style="display:flex;flex-direction:column;gap:8px;min-height:60px;max-height:220px;overflow:auto"></div>
+   <div style="display:flex;gap:10px"><button class="btn t" id="bBtScan">تحديث</button><button class="btn t" id="bBtBack">رجوع</button></div>
+  </div>
   <button class="btn t" id="bMpX">رجوع</button></div></section>
  <section class="scr" id="s-mpend"><div class="card" style="width:min(94vw,420px)"><h2>النتائج</h2>
   <div id="mpPodium" style="display:flex;flex-direction:column;gap:6px"></div><div class="chip" id="mpMine" style="align-self:center"></div>
@@ -165,7 +170,7 @@ St.load();
 const DF=[{g0:4.4,gm:3.4,s0:3.5,sm:6,ac:.07},{g0:3.9,gm:2.9,s0:4,sm:7,ac:.09},{g0:3.5,gm:2.6,s0:4.8,sm:9,ac:.13}];
 const bestV=()=>St.d.bests[St.d.diff];
 let L=St.d.lang||((navigator.language||'en').toLowerCase().startsWith('ar')?'ar':'en');
-const EN={'جارٍ التحميل…':'Loading…','الطائر':'Tipsy','الطائش':'Bird','الأفضل:':'Best:','سهل':'Easy','عادي':'Normal','صعب':'Hard','المروج':'Meadow','الصحراء':'Desert','القطب':'Arctic','العب':'Play','الإعدادات':'Settings','👆 المس الشاشة للطيران':'👆 Tap to flap','إيقاف مؤقت':'Paused','المؤثرات':'Sound FX','الموسيقى':'Music','أداء منخفض':'Low-power mode','استئناف':'Resume','إعادة':'Restart','القائمة':'Menu','انتهت اللعبة':'Game Over','🏆 رقم قياسي جديد!':'🏆 New record!','النتيجة':'Score','العب مرة أخرى':'Play again','تم':'Done','اللغة':'Language','السرعة':'Speed','أنقذك الدرع!':'Shield saved you!','درع!':'Shield!','مثالي':'Perfect','كومبو!':'Combo!','المستوى':'Level','تم تفعيل وضع الأداء المنخفض':'Low-power mode enabled','المتجر':'Shop','رجوع':'Back','تابع':'Continue','عملات غير كافية':'Not enough coins','تم الشراء!':'Purchased!','مستوى المؤثرات':'SFX volume','مستوى الموسيقى':'Music volume','الاهتزاز':'Vibration','اهتزاز الكاميرا':'Screen shake','عرض FPS':'Show FPS','حذف التقدّم':'Reset progress','حذف':'Delete','هل تريد حذف كل التقدم؟':'Delete all progress?','كلاسيكي':'Classic','أزرق':'Bluey','وردي':'Rosy','نعناعي':'Mint','الظل':'Shadow','ثلجي':'Snowy','الروبوت':'Robot','ناري':'Blaze','الملاك':'Angel','الملك':'King','مغناطيس!':'Magnet!','بطيء!':'Slow-mo!','المهام':'Missions','مهمة مكتملة!':'Mission complete!','الأزياء':'Skins','التعزيزات':'Boosters','مسلّح ✓':'Armed ✓','تُستخدم في الجولة القادمة':'Used in your next run','تعذّر تشغيل الإعلان':'Ad unavailable','قوة الرفرفة':'Flap power','المؤثرات النصية':'Text effects','تلميح الطيران':'Flap hint','المكافآت الإعلانية':'Ad rewards','حالة الإعلانات':'Ad status','مفعّلة ✓':'Linked ✓','غير مرتبطة':'Not linked','اختبار':'Test','استمرار مجاني':'Free continue','عملات من النقاط':'Coins from score +','درع مجاني!':'Free shield!','النينجا':'Ninja','الفضائي':'Alien','التنين':'Dragon','الساموراي':'Samurai','الباندا':'Panda','البرق':'Bolt','الماس':'Diamond','الملكة':'Queen','الطاووس':'Peacock','الأسطورة':'Legend','مكافأة يومية':'Daily reward','استلم':'Claim','اليوم':'Day','أونلاين':'Online','اللعب مع الأصدقاء':'Multiplayer','الاسم':'Name','إنشاء غرفة':'Create room','دخول برمز':'Join with code','دخول':'Join','رجوع':'Back','رمز الغرفة:':'Room code:','ابدأ السباق':'Start race','خروج':'Leave','النتائج':'Results','سباق جديد':'New race','بانتظار المضيف…':'Waiting for the host…','بانتظار المضيف للبدء…':'Waiting for the host to start…'};
+const EN={'جارٍ التحميل…':'Loading…','الطائر':'Tipsy','الطائش':'Bird','الأفضل:':'Best:','سهل':'Easy','عادي':'Normal','صعب':'Hard','المروج':'Meadow','الصحراء':'Desert','القطب':'Arctic','العب':'Play','الإعدادات':'Settings','👆 المس الشاشة للطيران':'👆 Tap to flap','إيقاف مؤقت':'Paused','المؤثرات':'Sound FX','الموسيقى':'Music','أداء منخفض':'Low-power mode','استئناف':'Resume','إعادة':'Restart','القائمة':'Menu','انتهت اللعبة':'Game Over','🏆 رقم قياسي جديد!':'🏆 New record!','النتيجة':'Score','العب مرة أخرى':'Play again','تم':'Done','اللغة':'Language','السرعة':'Speed','أنقذك الدرع!':'Shield saved you!','درع!':'Shield!','مثالي':'Perfect','كومبو!':'Combo!','المستوى':'Level','تم تفعيل وضع الأداء المنخفض':'Low-power mode enabled','المتجر':'Shop','رجوع':'Back','تابع':'Continue','عملات غير كافية':'Not enough coins','تم الشراء!':'Purchased!','مستوى المؤثرات':'SFX volume','مستوى الموسيقى':'Music volume','الاهتزاز':'Vibration','اهتزاز الكاميرا':'Screen shake','عرض FPS':'Show FPS','حذف التقدّم':'Reset progress','حذف':'Delete','هل تريد حذف كل التقدم؟':'Delete all progress?','كلاسيكي':'Classic','أزرق':'Bluey','وردي':'Rosy','نعناعي':'Mint','الظل':'Shadow','ثلجي':'Snowy','الروبوت':'Robot','ناري':'Blaze','الملاك':'Angel','الملك':'King','مغناطيس!':'Magnet!','بطيء!':'Slow-mo!','المهام':'Missions','مهمة مكتملة!':'Mission complete!','الأزياء':'Skins','التعزيزات':'Boosters','مسلّح ✓':'Armed ✓','تُستخدم في الجولة القادمة':'Used in your next run','تعذّر تشغيل الإعلان':'Ad unavailable','قوة الرفرفة':'Flap power','المؤثرات النصية':'Text effects','تلميح الطيران':'Flap hint','المكافآت الإعلانية':'Ad rewards','حالة الإعلانات':'Ad status','مفعّلة ✓':'Linked ✓','غير مرتبطة':'Not linked','اختبار':'Test','استمرار مجاني':'Free continue','عملات من النقاط':'Coins from score +','درع مجاني!':'Free shield!','النينجا':'Ninja','الفضائي':'Alien','التنين':'Dragon','الساموراي':'Samurai','الباندا':'Panda','البرق':'Bolt','الماس':'Diamond','الملكة':'Queen','الطاووس':'Peacock','الأسطورة':'Legend','مكافأة يومية':'Daily reward','استلم':'Claim','اليوم':'Day','أونلاين':'Online','اللعب مع الأصدقاء':'Multiplayer','الاسم':'Name','إنشاء غرفة':'Create room','دخول برمز':'Join with code','دخول':'Join','رجوع':'Back','رمز الغرفة:':'Room code:','ابدأ السباق':'Start race','خروج':'Leave','النتائج':'Results','سباق جديد':'New race','بانتظار المضيف…':'Waiting for the host…','بانتظار المضيف للبدء…':'Waiting for the host to start…','بلوتوث — استضافة':'Bluetooth — Host','بلوتوث — انضم لجهاز قريب':'Bluetooth — Join nearby','اجعل جهازك مرئيًا 5 دقائق':'Make device visible 5 min','تحديث':'Refresh'};
 const T=s=>L==='en'&&EN[s]||s;
 function lvlTxt(){const f=DF[St.d.diff];$('#lvl').textContent=T('السرعة')+' ×'+(Math.min(f.sm,f.s0+score*f.ac)/4).toFixed(1)}
 function applyLang(){const h=document.documentElement;h.lang=L;h.dir=L==='ar'?'rtl':'ltr';document.title=L==='ar'?'الطائر الطائش 3D':'Tipsy Bird 3D';
@@ -561,7 +566,7 @@ $$('[data-r]').forEach(r=>{r.value=St.d[r.dataset.r];r.addEventListener('input',
 const CA=window.Capacitor&&Capacitor.Plugins&&Capacitor.Plugins.App;
 if(CA&&CA.addListener){CA.addListener('backButton',()=>{if($('#s-miss').classList.contains('on'))$('#s-miss').classList.remove('on');else if($('#s-set').classList.contains('on'))openSet(false);else if(shopOn){shopOn=false;ui()}else if(state===S.PLAYING)pause();else if(state===S.PAUSED)resume();else if(state===S.READY||state===S.OVER)toMenu();else CA.exitApp()});CA.addListener('appStateChange',s=>{if(!s.isActive)pause()})}
 bind('#bPlay',toReady);bind('#bSet',()=>openSet(true));bind('#bDone',()=>openSet(false));bind('#bPause',pause);bind('#bRes',resume);
-bind('#bMp',()=>{if(!NET.ok()){toast(L==='en'?'Online multiplayer needs internet':'اللعب الأونلاين يحتاج اتصال إنترنت');return}$('#s-mp').classList.toggle('on');NET.setUI('home')});
+bind('#bMp',()=>{if(!NET.ok()&&!BT.av()){toast(L==='en'?'Group play needs internet or nearby Bluetooth':'اللعب الجماعي يحتاج إنترنت أو بلوتوث قريب');return}$('#s-mp').classList.toggle('on');NET.setUI('home')});
 bind('#bMpX',()=>{if(NET.inRoom)NET.leave();$('#s-mp').classList.remove('on')});
 bind('#bMpHost',()=>{Au.click();NET.create()});
 bind('#bMpJoinT',()=>{NET.setUI('join');setTimeout(()=>$('#mpCode').focus(),50)});
@@ -573,6 +578,12 @@ bind('#bMpLeave2',()=>NET.leave());
 bind('#bMpAgain',()=>{if(!NET.host){toast(L==='en'?'Waiting for the host…':'بانتظار المضيف…');return}if(!NET.inRoom)return;NET.start()});
 $('#mpName').value=St.d.mpName||'';$('#mpName').addEventListener('input',e=>{St.d.mpName=NET.esc(e.target.value);St.save()});
 $('#mpCode').addEventListener('input',e=>{e.target.value=e.target.value.toUpperCase().replace(/[^A-Z2-9]/g,'')});
+bind('#bBtH',()=>{Au.click();BT.hostStart()});
+bind('#bBtJ',()=>{Au.click();BT.joinStart()});
+bind('#bBtScan',()=>BT.joinStart());
+bind('#bBtVis',()=>{const p=BT.ap();if(p){try{p.discoverable()}catch(e){}}});
+bind('#bBtBack',()=>{BT.stop();NET.setUI('home')});
+$('#mpBtList').addEventListener('click',e=>{const b=e.target.closest?e.target.closest('[data-bt]'):null;if(b)BT.join(b.getAttribute('data-bt'))});
 bind('#bRst',toReady);bind('#bAgain',toReady);bind('#bMenu1',toMenu);bind('#bMenu2',toMenu);
 bind('#bSnd',()=>{const on=!(St.d.sfx||St.d.music);St.d.sfx=St.d.music=on;St.save();sync()});
 $$('.sw').forEach(b=>b.addEventListener('click',e=>{Au.init();const k=b.dataset.k;St.d[k]=!St.d[k];St.save();if(k==='low')quality();sync();Au.click()}));
@@ -626,13 +637,38 @@ function adCoinsGate(){if(St.d.ads===false)return!1;if(!UA.ok){toast(T('الإع
 bind('#bAdGift',()=>{if(!adCoinsGate())return;UA.show(AD_PLACE,ok=>{ok?adCoinsOk():adCoinsFail()})});
 bind('#bAdCoins',()=>{if(!adCoinsGate())return;UA.show(AD_PLACE,ok=>{ok?adCoinsOk():adCoinsFail()})});
 bind('#bRevAd',()=>{if(St.d.ads===false)return;if(!UA.ok){toast(T('الإعلانات غير مرتبطة في هذه النسخة — احصل على أحدث نسخة من التطبيق'));return}if(!UA.isOn()){toast(L==='en'?'Ads need an internet connection':'الإعلانات تحتاج اتصال إنترنت');return}UA.show(AD_PLACE,(ok,r)=>{if(ok)revive(true);else toast(r&&r.failed?(L==='en'?'No ad available — try again later':'لا يوجد إعلان — حاول بعد قليل'):T('تعذّر تشغيل الإعلان'))})});
+/* ---------- bluetooth rooms (native RFCOMM via TipsyBluetooth) ---------- */
+const BT={conns:{},buf:{},devs:{},host:false,onpeer:null,linked:null,
+ av(){const p=this.ap();return !!p&&!!(p.host&&p.connect&&p.send)},
+ ap(){try{const C=window.Capacitor;if(!C)return null;let p=null;if(C.getPlugin){try{p=C.getPlugin('TipsyBluetooth')}catch(e){}}return p||(C.Plugins&&C.Plugins.TipsyBluetooth)||null}catch(e){return null}},
+ esc:v=>String(v).replace(/[<>&"]/g,'').slice(0,16),
+ mk(id){const self=this;const c={peer:id,__bt:true,open:false,dn:'',hs:[],ds:[],cs:[],es:[],
+  on(ev,fn){if(ev==='open')c.hs.push(fn);else if(ev==='data')c.ds.push(fn);else if(ev==='close')c.cs.push(fn);else c.es.push(fn)},
+  send(m){if(!c.open)return;try{const p=self.ap();p&&p.send({id:id,text:JSON.stringify(m)})}catch(e){}},
+  close(){c.open=false;try{const p=self.ap();p&&p.drop&&p.drop({id:id})}catch(e){}}};
+  return c},
+ wire(){const p=this.ap();if(!p||p.__bw)return;p.__bw=true;if(p.addListener)p.addListener('btevent',e=>this.onEv(e))},
+ onEv(e){if(!e)return;const ty=e.type;
+  if(ty==='data'){const c=this.conns[e.id];if(!c)return;this.buf[e.id]=String(this.buf[e.id]||'')+String(e.text==null?'':e.text);let i;while((i=this.buf[e.id].indexOf('\n'))>=0){const line=this.buf[e.id].slice(0,i);this.buf[e.id]=this.buf[e.id].slice(i+1);if(!line.trim())continue;let d=null;try{d=JSON.parse(line)}catch(err){continue}c.ds.forEach(f=>{try{f(d)}catch(err){}})}return}
+  if(ty==='peer'){let c=this.conns[e.id];if(!c){c=this.mk(e.id);this.conns[e.id]=c}c.open=true;c.dn=this.esc(e.name||'');c.hs.forEach(f=>{try{f()}catch(err){}});if(this.onpeer)this.onpeer(c);return}
+  if(ty==='close'){const c=this.conns[e.id];this.buf[e.id]='';if(c){c.open=false;delete this.conns[e.id];c.cs.forEach(f=>{try{f()}catch(err){}})}return}
+  if(ty==='devices'){(e.items||[]).forEach(d=>{if(d&&d.id)this.devs[d.id]={id:d.id,name:this.esc(d.name||d.id),paired:!!d.paired}});this.renderL();return}
+  if(ty==='scanend')this.renderL()},
+ renderL(){const box=$('#mpBtList');if(!box)return;const a=Object.values(this.devs);box.innerHTML=a.length?a.map(d=>'<button class="btn t" data-bt="'+d.id+'">'+NET.esc(d.name)+'</button>').join(''):(L==='en'?'No devices — turn Bluetooth on; for first pairing make the host visible via its settings button':'لا أجهزة — شغَّل البلوتوث؛ للربط الأول اجعل جهاز المضيف مرئيًا من زر الإظهار ثم قرِّب الهاتفين')},
+ stop(){const p=this.ap();this.conns={};this.buf={};this.onpeer=null;if(p){try{p.stop()}catch(e){}}},
+ hostStart(){const p=this.ap();if(!this.av()){toast(L==='en'?'Bluetooth multiplayer needs the latest Android app':'البلوتوث يحتاج أحدث نسخة — حَدِّث اللعبة');return}this.stop();this.host=true;this.wire();
+  p.host().then(r=>{r=r||{};if(!r.ok){this.host=false;if(r.need==='enable'){toast(L==='en'?'Turn Bluetooth on and try again':'شغِّل البلوتوث ثم أعد المحاولة');try{p.enable()}catch(e){}}else toast(L==='en'?'Bluetooth is busy — try again':'البلوتوث مشغول — أعد المحاولة');return}NET.btHost()}).catch(()=>{this.host=false;toast(L==='en'?'Could not start Bluetooth':'تعذَّر تشغيل البلوتوث')})},
+ joinStart(){const p=this.ap();if(!this.av()){toast(L==='en'?'Bluetooth multiplayer needs the latest Android app':'البلوتوث يحتاج أحدث نسخة — حَدِّث اللعبة');return}NET.setUI('bt');this.devs={};this.wire();
+  p.paired().then(r=>{(r&&r.items||[]).forEach(d=>{if(d&&d.id)this.devs[d.id]={id:d.id,name:this.esc(d.name||d.id),paired:true}});this.renderL();try{p.scan()}catch(e){}}).catch(()=>this.renderL())},
+ join(a){if(!a)return;const p=this.ap();if(!this.av())return;this.stop();this.host=false;NET.btJoin(a);
+  p.connect({address:a}).then(r=>{if(!r||!r.ok){toast(L==='en'?'Could not connect — the other phone must be hosting':'تعذَّر الاتصال — تأكد أن الهاتف الآخر يستضيف');NET.setUI('bt')}}).catch(()=>{toast(L==='en'?'Could not connect':'تعذَّر الاتصال');NET.setUI('bt')})}};
 /* ---------- online rooms (P2P over WebRTC) ---------- */
 const NET={P:null,conns:[],players:[],code:'',host:false,live:false,inRoom:false,dead:false,seed:1,oldDiff:1,oldMap:0,diffSet:false,sendT:0,myId:null,retries:1,jt:0,
  ok(){return !!navigator.onLine&&typeof Peer!=='undefined'},
  esc:v=>String(v).replace(/[<>&"]/g,'').slice(0,12),
  name(){const v=(St.d.mpName||'').trim().slice(0,12);return this.esc(v||(L==='en'?'Bird-':'طائر-')+(100+Math.random()*900|0))},
  gen(){let c='';for(let i=0;i<5;i++)c+=MP_C[Math.random()*MP_C.length|0];return c},
- setUI(v){['mpHome','mpJoinB','mpRoomB'].forEach(i=>$('#'+i).style.display=('home'===v?'mpHome':'join'===v?'mpJoinB':'mpRoomB')===i?'flex':'none');
+ setUI(v){const mp={home:'mpHome',join:'mpJoinB',room:'mpRoomB',bt:'mpBt'};['mpHome','mpJoinB','mpRoomB','mpBt'].forEach(i=>$('#'+i).style.display=mp[v]===i?'flex':'none');
   if(v==='home')$('#mpStatus').textContent='';if(v!=='room'){$('#mpWait').style.display='none'}},
  wait(m){$('#mpStatus').textContent=m},
  create(){if(!this.ok()){toast(L==='en'?'Online multiplayer needs internet':'اللعب الأونلاين يحتاج اتصال إنترنت');return}this.host=true;this.code=this.gen();this.setUI('room');this.wait(L==='en'?'Connecting…':'جارٍ إنشاء الغرفة…');this.spawn('tipsybird3d-'+this.code)},
@@ -640,10 +676,10 @@ const NET={P:null,conns:[],players:[],code:'',host:false,live:false,inRoom:false
   this.P.on('open',()=>{if(!self.host||self.inRoom)return;self.inRoom=true;self.myId='H';self.players=[{id:'H',n:self.name(),sc:0,al:1}];self.setRoom();self.renderLobby();self.bcastWL()});
   this.P.on('connection',c=>{if(!self.inRoom){setTimeout(()=>{try{c.close()}catch(e){}},80);return}self.wire(c)});
   this.P.on('error',e=>{const ty=e&&e.type;if(ty==='unavailable-id'&&self.retries<3&&!self.live&&!self.inRoom){self.retries++;self.code=self.gen();self.spawn('tipsybird3d-'+self.code)}else if(ty==='peer-unavailable'){clearTimeout(self.jt);toast(L==='en'?'Room not found':'الغرفة غير موجودة');self.setUI('join')}else if(ty!=='network'){toast(L==='en'?'Connection problem, try again':'مشكلة بالاتصال — حاول مجددًا')}})},
- setRoom(){if(this.host){$('#bMpStart').style.display='';$('#mpWait').style.display='none';this.wait(L==='en'?'Share the code with your friends':'شارِك الرمز مع أصدقائك')}else{$('#bMpStart').style.display='none';$('#mpWait').style.display='';this.wait('')}},
- wire(c){const self=this;this.conns.push(c);c.on('data',d=>self.onData(c,d));c.on('close',()=>{self.conns=self.conns.filter(x=>x!==c);self.players=self.players.filter(p=>p.id!==c.peer);self.renderLobby();if(self.inRoom){self.bcastWL()}if(self.live&&self.allDone())self.endRace()})},
+ setRoom(){const bvis=$('#bBtVis');if(bvis)bvis.style.display='none';if(this.host){$('#bMpStart').style.display='';$('#mpWait').style.display='none';this.wait(L==='en'?'Share the code with your friends':'شارِك الرمز مع أصدقائك')}else{$('#bMpStart').style.display='none';$('#mpWait').style.display='';this.wait('')}},
+ wire(c){const self=this;this.conns.push(c);c.on('data',d=>self.onData(c,d));c.on('close',()=>{self.conns=self.conns.filter(x=>x!==c);self.players=self.players.filter(p=>p.id!==(c.__id||c.peer));self.renderLobby();if(self.inRoom){self.bcastWL()}if(self.live&&self.allDone())self.endRace()})},
  wireGuest(c){const self=this;this.conns=[c];c.on('data',d=>{if(!d)return;
-   if(d.t==='wl'){clearTimeout(self.jt);self.inRoom=true;self.myId=self.P.id;if(d.pl)self.players=d.pl.map(a=>({id:a[0],n:self.esc(a[1]),sc:0,al:1}));self.setRoom();self.renderLobby();return}
+   if(d.t==='wl'){clearTimeout(self.jt);self.inRoom=true;self.myId=d.me||self.P.id;if(d.pl)self.players=d.pl.map(a=>({id:a[0],n:self.esc(a[1]),sc:0,al:1}));self.setRoom();self.renderLobby();return}
    if(d.t==='go'){self.begin(d);return}
    if(d.t==='w'){self.guestState(d);return}
    if(d.t==='end'){self.showPodium(d.r);return}
@@ -657,8 +693,8 @@ const NET={P:null,conns:[],players:[],code:'',host:false,live:false,inRoom:false
   this.P.on('open',()=>{const c=self.P.connect('tipsybird3d-'+code,{reliable:true});self.wireGuest(c);c.on('open',()=>{c.send({t:'hi',name:self.name()})})});
   this.P.on('error',e=>{if(e&&e.type==='peer-unavailable'){clearTimeout(self.jt);toast(L==='en'?'Room not found':'الغرفة غير موجودة');self.setUI('join')}})},
  onData(c,d){if(!d)return;
-  if(d.t==='hi'){if(this.live){c.send({t:'live'});setTimeout(()=>{try{c.close()}catch(e){}},300);return}if(this.players.length>=8){c.send({t:'full'});setTimeout(()=>{try{c.close()}catch(e){}},300);return}this.players.push({id:c.peer,n:this.esc(d.name),sc:0,al:1});this.renderLobby();this.bcast({t:'wl',pl:this.players.map(p=>[p.id,p.n])});this.sendTo(c,{t:'wl',pl:this.players.map(p=>[p.id,p.n])});return}
-  if(d.t==='s'){const p=this.players.find(q=>q.id===c.peer);if(p){p.y=d.y||1.2;p.sc=d.sc|0;p.al=d.al?1:0;if(d.al===0&&this.allDone())this.endRace()}return}},
+  if(d.t==='hi'){if(this.live){c.send({t:'live'});setTimeout(()=>{try{c.close()}catch(e){}},300);return}if(this.players.length>=8){c.send({t:'full'});setTimeout(()=>{try{c.close()}catch(e){}},300);return}const uid=c.__bt?'G'+this.players.length:c.peer;c.__id=c.__bt?uid:c.__id;this.players.push({id:uid,n:this.esc(d.name),sc:0,al:1});this.renderLobby();this.bcast({t:'wl',pl:this.players.map(p=>[p.id,p.n])});this.sendTo(c,{t:'wl',pl:this.players.map(p=>[p.id,p.n]),me:uid});return}
+  if(d.t==='s'){const p=this.players.find(q=>q.id===(c.__id||c.peer));if(p){p.y=d.y||1.2;p.sc=d.sc|0;p.al=d.al?1:0;if(d.al===0&&this.allDone())this.endRace()}return}},
  sendTo(c,m){if(c&&c.open){try{c.send(m)}catch(e){}}},
  bcast(m){this.conns.forEach(c=>this.sendTo(c,m))},
  bcastWL(){this.bcast({t:'wl',pl:this.players.map(p=>[p.id,p.n])});this.renderLobby()},
@@ -687,14 +723,16 @@ const NET={P:null,conns:[],players:[],code:'',host:false,live:false,inRoom:false
   this.renderRail()},
  renderRail(){if(!this.live)return;const el=$('#mpRail');if(!el)return;const html=this.players.map((p,i)=>({n:p.n,sc:p.sc|0,al:p.al,i:i,me:p.id===this.myId})).sort((a,b)=>b.sc-a.sc).map(r=>'<div class="r'+(r.al?'':' dead')+'"><span class="dot" style="background:'+mpCol(r.i)+'"></span><span style="flex:1">'+this.esc(r.n)+'</span><b>'+(r.al?r.sc:'💥')+'</b></div>').join('');if(el.innerHTML!==html)el.innerHTML=html},
  renderLobby(){const box=$('#mpPlayers');if(!box)return;box.innerHTML=this.players.map((p,i)=>'<div class="prow"><span class="dot" style="background:'+mpCol(i)+'"></span><span style="flex:1">'+(p.id==='H'?(L==='en'?'Host: ':'المضيف: '):'')+this.esc(p.n)+(p.id===this.myId?' <small>'+(L==='en'?'you':'أنت')+'</small>':'')+'</span><small>'+(L==='en'?'ready':'جاهز')+'</small></div>').join('');$('#mpRoom').textContent=this.code||'-----'},
- leave(){clearTimeout(this.jt);this.conns.forEach(c=>{try{c.close()}catch(e){}});this.conns=[];try{this.P&&this.P.destroy()}catch(e){};this.P=null;
+ leave(){clearTimeout(this.jt);if(typeof BT!=='undefined')BT.stop();this.conns.forEach(c=>{try{c.close()}catch(e){}});this.conns=[];try{this.P&&this.P.destroy()}catch(e){};this.P=null;
   this.inRoom=this.live=this.dead=false;this.players=[];this.code='';
   if(this.diffSet){this.diffSet=false;St.d.diff=this.oldDiff|0;applyMap(this.oldMap|0);St.save()}
   ['#s-mp','#s-mpend'].forEach(s=>$(s).classList.remove('on'));$('#mpRail').style.display='none'},
- abort(m){toast(m);this.leave()}};
+ abort(m){toast(m);this.leave()},
+ btHost(){this.host=true;this.live=false;this.dead=false;this.inRoom=true;this.myId='H';this.code='BT';this.P=null;this.conns=[];this.players=[{id:'H',n:this.name(),sc:0,al:1}];this.setUI('room');this.setRoom();this.renderLobby();const bv=$('#bBtVis');if(bv)bv.style.display='';this.wait(L==='en'?'Bluetooth room open — friends tap your device below':'غرفة البلوتوث مفتوحة — يدخل الأصدقاء من جهازك'),BT.onpeer=c=>{if(BT.host)NET.wire(c);else NET.wireGuest(c)}},
+ btJoin(){this.host=false;this.live=false;this.dead=false;this.inRoom=false;this.myId=null;this.players=[];this.conns=[];this.code='';this.P={id:'btg'};clearTimeout(this.jt);this.setUI('room');this.wait(L==='en'?'Connecting over Bluetooth…':'جارٍ الاتصال عبر البلوتوث…');const self=this;this.jt=setTimeout(()=>{if(!self.inRoom&&!self.live){toast(L==='en'?'Could not reach that device — is it hosting?':'تعذَّر الوصول إلى الجهاز — هل هو يستضيف؟');self.setUI('bt')}},12000),BT.onpeer=c=>{if(BT.host){NET.wire(c)}else{NET.wireGuest(c);c.send({t:'hi',name:NET.name()})}}}};
 
 /* ---------- boot ---------- */
-quality();applyMap(St.d.map|0);applyLang();applySkin(St.d.skin|0);sync();reset();requestAnimationFrame(frame);
+quality();applyMap(St.d.map|0);applyLang();applySkin(St.d.skin|0);sync();reset();BT.wire();requestAnimationFrame(frame);
 setTimeout(()=>{$('#s-load').classList.remove('on');setState(S.MENU);dailyCheck()},600);
 })();
 </script>
