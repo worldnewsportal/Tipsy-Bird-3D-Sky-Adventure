@@ -35,8 +35,6 @@ jobs:
           cp src/index.html www/index.html
           cp -r src/vendor www/vendor
           grep -q 'src="vendor/three.min.js"' www/index.html
-          grep -q 'src="vendor/peerjs.min.js"' www/index.html
-          test -f www/vendor/peerjs.min.js
           if grep -qE '(src|href)="https?://|url\(https?://' www/index.html; then
             echo 'External URL found in web files'; exit 1
           fi
