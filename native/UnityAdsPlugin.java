@@ -39,7 +39,9 @@ public class UnityAdsPlugin extends Plugin {
 
             @Override
             public void onUnityAdsShowFailure(String placement, UnityAds.UnityAdsShowError error, String message) {
-                call.resolve();
+                JSObject r = new JSObject();
+                r.put("failed", true);
+                call.resolve(r);
             }
 
             @Override
@@ -60,7 +62,9 @@ public class UnityAdsPlugin extends Plugin {
 
             @Override
             public void onUnityAdsFailedToLoad(String p, UnityAds.UnityAdsLoadError error, String message) {
-                call.resolve();
+                JSObject r = new JSObject();
+                r.put("failed", true);
+                call.resolve(r);
             }
         };
     }
