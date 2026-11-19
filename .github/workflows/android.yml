@@ -38,6 +38,7 @@ jobs:
           if grep -qE '(src|href)="https?://|url\(https?://' www/index.html; then
             echo 'External URL found in web files'; exit 1
           fi
+          python3 tools/check_i18n.py www/index.html
 
       - name: Create Android project
         run: |
