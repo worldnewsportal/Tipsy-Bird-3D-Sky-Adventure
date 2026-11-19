@@ -35,8 +35,8 @@ import com.getcapacitor.BridgeActivity;
 public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
         registerPlugin(UnityAdsPlugin.class);
+        super.onCreate(savedInstanceState);
     }
 }
 JAVA
@@ -44,5 +44,7 @@ JAVA
 echo "--- verifying native ad integration ---"
 grep -q 'com.unity3d.ads:unity-ads:4.22.0' "$G" || { echo "FAIL: gradle dependency missing"; exit 1; }
 grep -q 'registerPlugin(UnityAdsPlugin.class)' "$M" || { echo "FAIL: MainActivity registration missing"; exit 1; }
+RP=$(grep -n 'registerPlugin(UnityAdsPlugin.class)' "$M" | head -1 | cut -d: -f1); SC=$(grep -n 'super.onCreate' "$M" | head -1 | cut -d: -f1)
+if [ -z "$RP" ] || [ -z "$SC" ] || [ "$RP" -gt "$SC" ]; then echo "FAIL: registerPlugin must be called BEFORE super.onCreate (Capacitor requirement)"; exit 1; fi
 test -f "$JAVA_DIR/UnityAdsPlugin.java" || { echo "FAIL: plugin java file missing"; exit 1; }
 echo "OK: UnityAdsPlugin native integration is in place (package: $APP_ID)"
