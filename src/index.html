@@ -135,7 +135,7 @@ input[type=range]{pointer-events:auto;width:120px;accent-color:var(--teal)}
   <div class="row"><span>المكافآت الإعلانية</span><button class="sw" data-k="ads"></button></div>
   <div class="row"><span>حالة الإعلانات</span><b id="adSt" style="font-size:15px"></b><button class="btn t sm" id="bAdTest" style="display:none;min-width:0;padding:9px 14px;background:#3a7ad4;box-shadow:0 6px 0 #1c4a8a">اختبار</button></div>
   <div class="row"><span>حذف التقدّم</span><button class="btn sm" id="bWipe" style="width:auto;background:#e5484d;box-shadow:0 6px 0 #9a1f24">حذف</button></div>
-  <div class="row"><span>اللغة</span><button class="btn t sm" id="bLang" style="width:auto">English</button></div><button class="btn" id="bDone">تم</button></div></section>
+  <div class="row"><span>اللغة</span><button class="btn t sm" id="bLang" style="width:auto">English</button></div><div id="crashBox" style="display:none;background:rgba(229,72,77,.12);border:1px solid #e5484d;border-radius:10px;padding:8px 10px;margin:8px 0;color:#ffb3b5;font-size:12px;white-space:pre-wrap;word-break:break-word;direction:ltr;text-align:left;max-height:130px;overflow:auto"></div><button class="btn" id="bDone">تم</button></div></section>
  <section class="scr" id="s-mp"><div class="card" style="max-height:74vh;width:min(94vw,420px)"><h2>اللعب مع الأصدقاء</h2>
   <div class="row"><span>الاسم</span><input type="text" id="mpName" maxlength="12"></div>
   <div id="mpHome" style="display:flex;flex-direction:column;gap:10px"><button class="btn" id="bMpHost">إنشاء غرفة</button><button class="btn t" id="bMpJoinT">دخول برمز</button><button class="btn t" id="bBtH">بلوتوث — استضافة</button><button class="btn t" id="bBtJ">بلوتوث — انضم لجهاز قريب</button></div>
@@ -157,6 +157,9 @@ input[type=range]{pointer-events:auto;width:120px;accent-color:var(--teal)}
 <script src="vendor/peerjs.min.js"></script>
 <script>
 (()=>{
+window.__errs=[];window.__lastCrashB64=window.__lastCrashB64||'';
+window.addEventListener('error',e=>{try{window.__errs.push((e.message||e.type||'error')+' line '+(e.lineno||0));if(window.__errs.length>8)window.__errs.shift()}catch(_){}});
+window.addEventListener('unhandledrejection',e=>{try{window.__errs.push('P '+(e&&e.reason&&e.reason.message||e.reason||'reject'));if(window.__errs.length>8)window.__errs.shift()}catch(_){}});
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const IC=n=>'<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-'+n+'"/></svg>';
 if(!window.THREE){$('#s-load').innerHTML='<h1 class="logo" style="font-size:32px;animation:none">تعذّر تشغيل المحرك · Engine failed to start</h1>';return}
@@ -621,6 +624,12 @@ UA.init();
 function adStatus(){const el=$('#adSt');if(!el)return;const on=UA.isOn();
  el.textContent=St.d.ads===false?(L==='en'?'Off (settings)':'معطّلة (الإعدادات)'):!UA.ok?(L==='en'?'Not linked — update app':'غير مرتبطة — حدِّث التطبيق'):!on?(L==='en'?'Offline — need internet':'غير متصل — الإعلانات بالإنترنت'):(UA.ready||!UA.P?T('مفعّلة ✓'):(L==='en'?'Connected ✓':'متصل — جاهزة ✓'));
  $('#bAdTest').style.display=St.d.ads!==false?'':'none'}
+function crashBoxShow(){const box=$('#crashBox');if(!box)return;const items=[];
+ let last='';try{last=window.__lastCrashB64?atob(window.__lastCrashB64):''}catch(e){last=''}
+ if(last.trim())items.push('NATIVE CRASH:\n'+last.slice(-900));
+ if(window.__errs&&window.__errs.length)items.push('JS ERRORS:\n'+window.__errs.slice(-5).join('\n'));
+ if(!items.length){box.style.display='none';return}box.textContent=items.join('\n');box.style.display='block'}
+window.addEventListener('crashinfo',crashBoxShow);
 function netRetry(){if(!UA.P||UA.P&&!UA.ready&&UA.isOn()){UA.init();return}UA.online=UA.isOn();UA.preload();umbn();adStatus();maybeAdGift();maybeAdCoins()}
 window.addEventListener('online',()=>{UA.online=true;setTimeout(netRetry,1500)});
 window.addEventListener('offline',()=>{UA.online=false;umbn();adStatus();maybeAdGift();maybeAdCoins();if(typeof NET!=='undefined'&&NET.inRoom&&!NET.isBt())NET.abort(L==='en'?'Internet lost — room closed':'انقطع الإنترنت — أُغلقت الغرفة')});
@@ -733,7 +742,7 @@ const NET={P:null,conns:[],players:[],code:'',host:false,live:false,inRoom:false
  btJoin(){this.host=false;this.live=false;this.dead=false;this.inRoom=false;this.myId=null;this.players=[];this.conns=[];this.code='';this.P={id:'btg'};clearTimeout(this.jt);this.setUI('room');this.wait(L==='en'?'Connecting over Bluetooth…':'جارٍ الاتصال عبر البلوتوث…');const self=this;this.jt=setTimeout(()=>{if(!self.inRoom&&!self.live){toast(L==='en'?'Could not reach that device — is it hosting?':'تعذَّر الوصول إلى الجهاز — هل هو يستضيف؟');self.setUI('bt')}},12000),BT.onpeer=c=>{if(BT.host){NET.wire(c)}else{NET.wireGuest(c);c.send({t:'hi',name:NET.name()})}}}};
 
 /* ---------- boot ---------- */
-quality();applyMap(St.d.map|0);applyLang();applySkin(St.d.skin|0);sync();reset();BT.wire();requestAnimationFrame(frame);
+quality();applyMap(St.d.map|0);applyLang();applySkin(St.d.skin|0);sync();reset();BT.wire();crashBoxShow();requestAnimationFrame(frame);
 setTimeout(()=>{$('#s-load').classList.remove('on');setState(S.MENU);dailyCheck()},600);
 })();
 </script>

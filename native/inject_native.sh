@@ -63,14 +63,51 @@ cat > "$MF" <<JAVA
 package $APP_ID;
 
 import android.os.Bundle;
+import android.util.Base64;
+import android.util.Log;
 import com.getcapacitor.BridgeActivity;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileWriter;
+import java.io.PrintWriter;
+import java.util.Date;
 
 public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        final Thread.UncaughtExceptionHandler prev = Thread.getDefaultUncaughtExceptionHandler();
+        Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
+            @Override
+            public void uncaughtException(Thread t, Throwable e) {
+                try {
+                    PrintWriter w = new PrintWriter(new FileWriter(new File(getFilesDir(), "crash.log"), true));
+                    w.println("--- crash " + new Date() + " ---");
+                    w.println(Log.getStackTraceString(e));
+                    w.close();
+                } catch (Exception ignored) { }
+                if (prev != null) prev.uncaughtException(t, e);
+            }
+        });
         registerPlugin(UnityAdsPlugin.class);
         registerPlugin(BluetoothPlugin.class);
         super.onCreate(savedInstanceState);
+        try {
+            File f = new File(getFilesDir(), "crash.log");
+            if (f.exists() && f.length() > 0) {
+                long skip = Math.max(0, f.length() - 6000);
+                FileInputStream in = new FileInputStream(f);
+                in.skip(skip);
+                byte[] b = new byte[(int) (f.length() - skip)];
+                int n = in.read(b);
+                in.close();
+                if (n > 0) {
+                    String s = Base64.encodeToString(b, 0, n, Base64.NO_WRAP);
+                    if (bridge != null && bridge.getWebView() != null) {
+                        bridge.getWebView().evaluateJavascript("window.__lastCrashB64='" + s + "';try{dispatchEvent(new CustomEvent('crashinfo'))}catch(_e){}", null);
+                    }
+                }
+            }
+        } catch (Exception ignored) { }
     }
 }
 JAVA
@@ -92,4 +129,8 @@ grep -q 'android.permission.BLUETOOTH_CONNECT' "$M" || { echo "FAIL: bluetooth p
 grep -q 'android.permission.BLUETOOTH_SCAN' "$M" || { echo "FAIL: bluetooth scan permission missing"; exit 1; }
 grep -q 'uses-feature android:name="android.hardware.bluetooth"' "$M" || { echo "FAIL: bluetooth feature declaration missing"; exit 1; }
 grep -q 'android.permission.ACCESS_NETWORK_STATE' "$M" || { echo "FAIL: ACCESS_NETWORK_STATE missing"; exit 1; }
+CH=$(grep -n 'setDefaultUncaughtExceptionHandler' "$MF" | head -1 | cut -d: -f1)
+if [ -z "$CH" ] || [ "$CH" -gt "$SC" ]; then echo "FAIL: crash handler must be installed before super.onCreate"; exit 1; fi
+grep -q 'crash.log' "$MF" || { echo "FAIL: crash log path missing"; exit 1; }
 echo "OK: BluetoothPlugin native integration is in place (package: $APP_ID)"
+echo "OK: crash reporter installed (crash.log shown in settings on next launch)"
