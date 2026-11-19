@@ -1,6 +1,8 @@
 package com.tipsybird.game;
 
 import android.app.Activity;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.ViewGroup;
 import android.view.Gravity;
 import android.widget.FrameLayout;
@@ -26,6 +28,7 @@ public class UnityAdsPlugin extends Plugin {
     private String gameId = "800443610";
     private boolean testMode = false;
     private BannerView banner;
+    private int bannerTries = 0;
 
     private IUnityAdsShowListener showListener(final PluginCall call, final boolean rewarded) {
         return new IUnityAdsShowListener() {
@@ -135,8 +138,10 @@ public class UnityAdsPlugin extends Plugin {
     @PluginMethod
     public void showBanner(PluginCall call) {
         String pl = call.getString("placement", "Banner_Android");
+        if (bridge == null || bridge.getActivity() == null) { call.resolve(); return; }
         Activity a = bridge.getActivity();
         if (banner != null) { banner.destroy(); banner = null; }
+        bannerTries = 0;
         BannerView b = new BannerView(a, pl, new UnityBannerSize(320, 50));
         b.setListener(new BannerView.IListener() {
             @Override
@@ -149,7 +154,15 @@ public class UnityAdsPlugin extends Plugin {
             public void onBannerClick(BannerView bannerAdView) { }
 
             @Override
-            public void onBannerFailedToLoad(BannerView bannerAdView, BannerErrorInfo errorInfo) { }
+            public void onBannerFailedToLoad(BannerView bannerAdView, BannerErrorInfo errorInfo) {
+                if (bannerTries++ < 3) {
+                    new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
+                        public void run() {
+                            try { bannerAdView.load(new UnityAdsLoadOptions()); } catch (Exception ignored) { }
+                        }
+                    }, 5000);
+                }
+            }
 
             @Override
             public void onBannerLeftApplication(BannerView bannerAdView) { }

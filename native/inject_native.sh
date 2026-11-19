@@ -43,6 +43,17 @@ open(p, 'w').write(s)
 PYEX
 fi
 
+# 2b) Network state permission (Unity Ads SDK checks connectivity on init/load)
+if ! grep -q 'android.permission.ACCESS_NETWORK_STATE' "$M"; then
+  python3 - "$M" <<'PYNET'
+import sys
+p = sys.argv[1]
+s = open(p).read()
+s = s.replace('</manifest>', '    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />\n</manifest>', 1)
+open(p, 'w').write(s)
+PYNET
+fi
+
 # 3) Register both plugins in MainActivity (rewrite canonically; cap add generates an empty class)
 MF=$(find $APP/java -name MainActivity.java)
 if [ -z "$MF" ]; then
@@ -80,4 +91,5 @@ test -f "$JAVA_DIR/BluetoothPlugin.java" || { echo "FAIL: bluetooth plugin java 
 grep -q 'android.permission.BLUETOOTH_CONNECT' "$M" || { echo "FAIL: bluetooth permissions missing"; exit 1; }
 grep -q 'android.permission.BLUETOOTH_SCAN' "$M" || { echo "FAIL: bluetooth scan permission missing"; exit 1; }
 grep -q 'uses-feature android:name="android.hardware.bluetooth"' "$M" || { echo "FAIL: bluetooth feature declaration missing"; exit 1; }
+grep -q 'android.permission.ACCESS_NETWORK_STATE' "$M" || { echo "FAIL: ACCESS_NETWORK_STATE missing"; exit 1; }
 echo "OK: BluetoothPlugin native integration is in place (package: $APP_ID)"
