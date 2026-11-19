@@ -86,7 +86,9 @@ public class UnityAdsPlugin extends Plugin {
 
             @Override
             public void onInitializationFailed(UnityAds.UnityAdsInitializationError error, String message) {
-                call.resolve();
+                JSObject r = new JSObject();
+                r.put("failed", true);
+                call.resolve(r);
             }
         });
     }

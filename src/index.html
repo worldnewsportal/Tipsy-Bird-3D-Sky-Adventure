@@ -154,7 +154,10 @@ function applyLang(){const h=document.documentElement;h.lang=L;h.dir=L==='ar'?'r
  const w=document.createTreeWalker($('#ui'),NodeFilter.SHOW_TEXT);let n;while(n=w.nextNode()){if(n._o==null)n._o=n.nodeValue;const m=n._o.match(/^(\s*)([\s\S]*?)(\s*)$/);if(m[2]&&EN[m[2]]!==undefined)n.nodeValue=m[1]+(L==='en'?EN[m[2]]:m[2])+m[3]}
  $('#bLang').innerHTML=IC('globe')+(L==='en'?'العربية':'English');lvlTxt();adStatus()}
 /* ---------- audio (procedural) ---------- */
-const MEL=[12,16,19,16,14,16,12,9,12,16,19,24,19,16,14,12],BAS=[0,0,7,7,5,5,7,7];
+const TRACKS=[
+{mel:[12,16,19,16,14,16,12,9,12,16,19,24,19,16,14,12,12,16,19,16,21,19,16,12,13,17,20,17,19,17,16,12],bas:[0,0,7,7,5,5,7,7,0,0,7,7,5,5,7,7]},
+{mel:[9,12,16,12,14,12,9,7,9,12,16,19,16,12,9,4,9,12,16,12,14,12,9,7,16,19,21,19,16,12,9,7],bas:[9,9,4,4,5,5,4,4,9,9,4,4,5,5,7,7]},
+{mel:[7,11,14,11,12,14,19,14,16,14,12,9,11,9,7,4,7,11,14,11,12,14,19,14,23,19,16,14,12,11,7,7],bas:[7,7,2,2,4,4,7,7,7,7,2,2,4,4,9,9]}],MST=32;
 const Au={c:null,tm:null,nx:0,st:0,
  init(){if(this.c){if(this.c.state==='suspended')this.c.resume();return}
   const A=window.AudioContext||window.webkitAudioContext;if(!A)return;this.c=new A();
@@ -176,9 +179,9 @@ const Au={c:null,tm:null,nx:0,st:0,
  click(){this.tone(620,.07,'square',.1,860)},
  coin(){this.tone(1100,.09,'sine',.3,1700)},
  music(on){if(!this.c)return;if(!on){clearInterval(this.tm);this.tm=null;return}if(this.tm)return;this.nx=this.c.currentTime+.1;
-  this.tm=setInterval(()=>{while(this.nx<this.c.currentTime+.4){const i=this.st++%16;
-   this.tone(261.63*2**(MEL[i]/12),.18,'triangle',.5,0,this.nx,this.mg);
-   if(i%2===0)this.tone(130.8*2**(BAS[i>>1]/12),.36,'sine',.7,0,this.nx,this.mg);this.nx+=.2}},100)}};
+  this.tm=setInterval(()=>{while(this.nx<this.c.currentTime+.4){const i=this.st++,tr=TRACKS[(i/MST|0)%TRACKS.length],k=i%MST;
+   this.tone(261.63*2**(tr.mel[k]/12),.18,'triangle',.5,0,this.nx,this.mg);
+   if(k%2===0)this.tone(130.8*2**(tr.bas[k>>1]/12),.36,'sine',.7,0,this.nx,this.mg);this.nx+=.2}},100)}};
 function syncMusic(){Au.music(St.d.music&&!document.hidden)}
 /* ---------- renderer / scene ---------- */
 const cv=$('#c'),R=new THREE.WebGLRenderer({canvas:cv,antialias:true,powerPreference:'high-performance'});
@@ -469,7 +472,7 @@ function step(dt){t+=dt;
   if(B.y-BR<GROUND){B.y=GROUND+BR;B.vy=0}overT+=dt;
   if(overT>.35&&!B.o1){B.o1=1;Au.over()}
   if(overT>.9&&!shown){shown=true;B.o1=0;$('#fs').textContent=score;$('#medal').textContent=score>=40?'🥇':score>=25?'🥈':score>=10?'🥉':'';$$('.bestv').forEach(e=>e.textContent=bestV());
-   $('#newb').style.display=newRec?'':'none';const rb=$('#bRev');rb.style.display=!revived&&(St.d.coins>=REV||St.d.revT>0)?'':'none';rb.textContent=St.d.revT>0?T('استمرار مجاني')+(St.d.revT>1?' ×'+St.d.revT:''):T('تابع')+' · 🪙 '+REV;const ra=$('#bRevAd');ra.style.display=!revived&&UA.ok&&St.d.ads!==false&&UA.isOn()?'':'none';ra.textContent=T('استمرار')+' 🎁';
+   $('#newb').style.display=newRec?'':'none';const rb=$('#bRev');rb.style.display=!revived&&(St.d.coins>=REV||St.d.revT>0)?'':'none';rb.textContent=St.d.revT>0?T('استمرار مجاني')+(St.d.revT>1?' ×'+St.d.revT:''):T('تابع')+' · 🪙 '+REV;const ra=$('#bRevAd');ra.style.display=!revived&&St.d.ads!==false?'':'none';ra.textContent=T('استمرار')+' 🎁';
    {const inc=Math.max(0,Math.floor(score/2)-Math.floor(rwdBase/2));if(inc>0){addCoins(inc);toast((L==='en'?'Coins from score +':'عملات من النقاط +')+inc+' 🪙')}rwdBase=score}
    {const mx=mb();if(score>(mx.bs||0)){mx.bs=score;St.save()}}if(newRec){Au.win();emit(0,5,0,80,[0xff4f7b,0xffd23f,0x27c1b0,0x6c8cff,0xffffff],7,5,5)}if(!revived&&UA.okIn&&St.d.ads!==false&&UA.isOn()){const c=(St.d.ioC=(St.d.ioC||0)+1);if(c%INT_EVERY===0&&Date.now()-(St.d.ioT||0)>=INT_COOL){St.d.ioT=Date.now();St.save();UA.showIn(IN_PLACE,function(){})}}ui()}
  }else{B.y=1.2+Math.sin(t*3.2)*.18;B.vy=0}}
@@ -520,7 +523,7 @@ bind('#bShop',()=>{shopOn=true;renderShop();ui()});
 $$('[data-t]').forEach(b=>b.addEventListener('click',()=>{Au.init();Au.click();shopTab=b.dataset.t;$$('[data-t]').forEach(x=>x.classList.toggle('on',x===b));renderShop()}));
 bind('#bMiss',()=>{renderMissions();$('#s-miss').classList.add('on')});bind('#bMissX',()=>$('#s-miss').classList.remove('on'));
 bind('#bClaim',()=>{if(mpend){St.d.coins+=mpend.bonus;St.d.mi={tier:mpend.t+1,p:[0,0,0,0,0],c:[0,0,0,0,0],bs:0};St.save();mpend=null;Au.win();sync();$('#s-daily').classList.remove('on');return}if(!dpend)return;St.d.dr={last:dpend.d,streak:dpend.st};St.d.coins+=dpend.amt;dpend=null;St.save();Au.win();sync();$('#s-daily').classList.remove('on')});bind('#bShopX',()=>{shopOn=false;ui()});bind('#bRev',()=>{if(St.d.revT>0){St.d.revT--;St.save();revive(true)}else revive()});
-bind('#bAdTest',()=>{if(!UA.ok||!UA.isOn())return;toast(L==='en'?'Loading ad…':'جارٍ التحميل…');UA.show(AD_PLACE,okd=>toast(okd?(L==='en'?'Ad works ✓':'الإعلان يعمل ✓'):T('تعذّر تشغيل الإعلان')))});
+bind('#bAdTest',()=>{if(St.d.ads===false)return;if(!UA.ok||!UA.isOn()){toast(T('الإعلانات غير مرتبطة في هذه النسخة — احصل على أحدث نسخة من التطبيق'));return}toast(L==='en'?'Loading ad…':'جارٍ التحميل…');UA.show(AD_PLACE,okd=>toast(okd?(L==='en'?'Ad works ✓':'الإعلان يعمل ✓'):T('تعذّر تشغيل الإعلان')))});
 bind('#bWipe',()=>{if(confirm(T('هل تريد حذف كل التقدم؟'))){try{localStorage.removeItem('tipsy3d')}catch(e){}location.reload()}});
 $$('[data-r]').forEach(r=>{r.value=St.d[r.dataset.r];r.addEventListener('input',()=>{St.d[r.dataset.r]=+r.value;St.save();Au.vol()});r.addEventListener('change',()=>{Au.init();Au.click()})});
 const CA=window.Capacitor&&Capacitor.Plugins&&Capacitor.Plugins.App;
@@ -539,12 +542,14 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden){pause();Au
 addEventListener('blur',pause);addEventListener('resize',resize);addEventListener('orientationchange',()=>setTimeout(resize,200));
 /* ---------- Unity Ads bridge (rewarded only, user-initiated) ---------- */
 const AD_GIFT=15,AD_COOL=180000,AD_PLACE='Rewarded_Android',IN_PLACE='Interstitial_Android',BN_PLACE='Banner_Android',INT_EVERY=4,INT_COOL=120000;
-const UA={P:null,ok:false,okIn:false,okBn:false,online:true,ready:false,
+const UA={P:null,ok:false,okIn:false,okBn:false,online:true,ready:false,nt:0,
  isOn(){try{return navigator.onLine!==false}catch(e){return true}},
  preload(){if(!this.ready||!this.online||!this.P||!this.P.preload)return;try{this.P.preload({type:'rewarded',placement:AD_PLACE});this.P.preload({type:'interstitial',placement:IN_PLACE})}catch(e){}},
- init(){try{const C=window.Capacitor;this.P=C&&C.Plugins&&C.Plugins.UnityAds||null;
+ init(){try{const C=window.Capacitor;let pp=null;if(C&&C.getPlugin){try{pp=C.getPlugin('UnityAds')}catch(e){}}
+  this.P=pp||C&&C.Plugins&&C.Plugins.UnityAds||null;
+  if(!this.P&&navigator.onLine!==false&&++this.nt<4){setTimeout(()=>{if(!UA.P)UA.init()},1200*(this.nt||1))}
   this.online=this.isOn();this.ok=!!(this.P&&this.P.showRewarded);this.okIn=!!(this.P&&this.P.showInterstitial);this.okBn=!!(this.P&&(this.P.showBanner||this.P.hideBanner));
-  if(this.P&&this.P.initialize&&this.online){try{Promise.resolve(this.P.initialize({gameId:window.UnityAdsGameId||'800443610',testMode:!!window.UnityAdsTestMode})).then(()=>{this.ready=true;this.preload();umbn();adStatus()}).catch(()=>{this.ready=false;setTimeout(()=>netRetry(),4000)})}catch(e){}}
+  if(this.P&&this.P.initialize&&this.online){try{Promise.resolve(this.P.initialize({gameId:window.UnityAdsGameId||'800443610',testMode:!!window.UnityAdsTestMode})).then(r=>{if(r&&r.failed){this.ready=false;setTimeout(()=>netRetry(),4000)}else{this.ready=true;this.preload();umbn();adStatus()}}).catch(()=>{this.ready=false;setTimeout(()=>netRetry(),4000)})}catch(e){}}
   else if(this.P)this.ready=false;
   umbn();adStatus()}catch(e){this.ok=false}},
  show(pl,cb){if(!this.ok||!this.isOn()){cb(false);return}
@@ -559,22 +564,24 @@ function umbn(){const want=UA.okBn&&St&&St.d&&St.d.ads!==false&&state===S.MENU&&
  else if(!want&&bnOn){bnOn=false;try{UA.P.hideBanner()}catch(e){}}}
 UA.init();
 function adStatus(){const el=$('#adSt');if(!el)return;const on=UA.isOn();
- el.textContent=St.d.ads===false?(L==='en'?'Off (settings)':'معطّلة (الإعدادات)'):!UA.ok?(L==='en'?'Not linked':'غير مرتبطة'):!on?(L==='en'?'Offline — need internet':'غير متصل — الإعلانات بالإنترنت'):(UA.ready||!UA.P?T('مفعّلة ✓'):(L==='en'?'Connected ✓':'متصل — جاهزة ✓'));
- $('#bAdTest').style.display=UA.ok&&St.d.ads!==false?'':'none'}
-function netRetry(){if(UA.P&&!UA.ready&&UA.isOn()){UA.init()}else{UA.online=UA.isOn();UA.preload();umbn();adStatus();maybeAdGift();maybeAdCoins()}}
+ el.textContent=St.d.ads===false?(L==='en'?'Off (settings)':'معطّلة (الإعدادات)'):!UA.ok?(L==='en'?'Not linked — update app':'غير مرتبطة — حدِّث التطبيق'):!on?(L==='en'?'Offline — need internet':'غير متصل — الإعلانات بالإنترنت'):(UA.ready||!UA.P?T('مفعّلة ✓'):(L==='en'?'Connected ✓':'متصل — جاهزة ✓'));
+ $('#bAdTest').style.display=St.d.ads!==false?'':'none'}
+function netRetry(){if(!UA.P||UA.P&&!UA.ready&&UA.isOn()){UA.init();return}UA.online=UA.isOn();UA.preload();umbn();adStatus();maybeAdGift();maybeAdCoins()}
 window.addEventListener('online',()=>{UA.online=true;setTimeout(netRetry,1500)});
 window.addEventListener('offline',()=>{UA.online=false;umbn();adStatus();maybeAdGift();maybeAdCoins()});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout(netRetry,900)});
 setInterval(()=>{if(!UA.ready)netRetry()},30000);
 
-function maybeAdGift(){if(UA.ok)$('#bAdGift').style.display=(Date.now()-(St.d.adT||0)>=AD_COOL&&St.d.ads!==false&&UA.isOn())?'':'none'}
-function maybeAdCoins(){const el=$('#bAdCoins');if(!el)return;const vis=UA.ok&&St.d.ads!==false&&UA.isOn()&&Date.now()-(St.d.adT||0)>=AD_COOL;el.style.display=vis?'':'none';if(vis)el.innerHTML=IC('gift')+(L==='en'?'+'+AD_GIFT+' coins':'+'+AD_GIFT+' عملات')}
+function maybeAdGift(){const el=$('#bAdGift');if(!el)return;el.style.display=St.d.ads===false?'none':''}
+function maybeAdCoins(){const el=$('#bAdCoins');if(!el)return;el.style.display=St.d.ads===false?'none':'';if(St.d.ads!==false)el.innerHTML=IC('gift')+(L==='en'?'+'+AD_GIFT+' coins':'+'+AD_GIFT+' عملات')}
 function adCoinsOk(){St.d.adT=Date.now();St.d.coins+=AD_GIFT;St.save();sync();renderShop();Au.win();toast((L==='en'?'Bonus coins! +':'مكافر الإعلان.. +')+AD_GIFT+' 🪙');maybeAdGift();maybeAdCoins()}
 function adCoinsFail(){toast(L==='en'?'No ad available right now — try again later':'لا يوجد إعلان الآن — حاول بعد قليل');maybeAdGift();maybeAdCoins()}
-function adCoinsGate(){if(!UA.ok||St.d.ads===false)return!1;if(Date.now()-(St.d.adT||0)<AD_COOL)return!1;if(!UA.isOn()){toast(L==='en'?'Ads need an internet connection':'الإعلانات تحتاج اتصال إنترنت');return!1}return!0}
+function adCoinsGate(){if(St.d.ads===false)return!1;if(!UA.ok){toast(T('الإعلانات غير مرتبطة في هذه النسخة — احصل على أحدث نسخة من التطبيق'));return!1}
+ if(!UA.isOn()){toast(L==='en'?'Ads need an internet connection':'الإعلانات تحتاج اتصال إنترنت');return!1}
+ const c=AD_COOL-(Date.now()-(St.d.adT||0));if(c>0){toast((L==='en'?'Watch an ad again in ':'حاول مشاهدة إعلان آخر بعد ')+Math.ceil(c/60000)+(L==='en'?' min':' دقيقة'));return!1}return!0}
 bind('#bAdGift',()=>{if(!adCoinsGate())return;UA.show(AD_PLACE,ok=>{ok?adCoinsOk():adCoinsFail()})});
 bind('#bAdCoins',()=>{if(!adCoinsGate())return;UA.show(AD_PLACE,ok=>{ok?adCoinsOk():adCoinsFail()})});
-bind('#bRevAd',()=>{if(!UA.ok||St.d.ads===false){toast(T('تعذّر تشغيل الإعلان'));return}if(!UA.isOn()){toast(L==='en'?'Ads need an internet connection':'الإعلانات تحتاج اتصال إنترنت');return}UA.show(AD_PLACE,(ok,r)=>{if(ok)revive(true);else toast(r&&r.failed?(L==='en'?'No ad available — try again later':'لا يوجد إعلان — حاول بعد قليل'):T('تعذّر تشغيل الإعلان'))})});
+bind('#bRevAd',()=>{if(St.d.ads===false)return;if(!UA.ok){toast(T('الإعلانات غير مرتبطة في هذه النسخة — احصل على أحدث نسخة من التطبيق'));return}if(!UA.isOn()){toast(L==='en'?'Ads need an internet connection':'الإعلانات تحتاج اتصال إنترنت');return}UA.show(AD_PLACE,(ok,r)=>{if(ok)revive(true);else toast(r&&r.failed?(L==='en'?'No ad available — try again later':'لا يوجد إعلان — حاول بعد قليل'):T('تعذّر تشغيل الإعلان'))})});
 /* ---------- boot ---------- */
 quality();applyMap(St.d.map|0);applyLang();applySkin(St.d.skin|0);sync();reset();requestAnimationFrame(frame);
 setTimeout(()=>{$('#s-load').classList.remove('on');setState(S.MENU);dailyCheck()},600);
