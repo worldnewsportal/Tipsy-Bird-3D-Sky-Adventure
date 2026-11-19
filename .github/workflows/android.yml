@@ -21,6 +21,7 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
+          cache: gradle
 
       - name: Install dependencies
         run: npm install
@@ -62,7 +63,14 @@ jobs:
         working-directory: android
         run: |
           chmod +x gradlew
-          ./gradlew assembleRelease --no-daemon
+          ok=0
+          for i in 1 2 3; do
+            if ./gradlew assembleRelease --no-daemon; then ok=1; break; fi
+            if [ $i -eq 3 ]; then break; fi
+            echo "Transient dependency failure (attempt $i) — retrying in 45s..."
+            sleep 45
+          done
+          [ $ok -eq 1 ] || exit 1
 
       - name: Sign APK
         env:
