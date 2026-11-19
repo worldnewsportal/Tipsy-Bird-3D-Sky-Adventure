@@ -440,9 +440,9 @@ function step(dt){t+=dt;
   if(B.y-BR<GROUND){B.y=GROUND+BR;B.vy=0}overT+=dt;
   if(overT>.35&&!B.o1){B.o1=1;Au.over()}
   if(overT>.9&&!shown){shown=true;B.o1=0;$('#fs').textContent=score;$('#medal').textContent=score>=40?'🥇':score>=25?'🥈':score>=10?'🥉':'';$$('.bestv').forEach(e=>e.textContent=bestV());
-   $('#newb').style.display=newRec?'':'none';const rb=$('#bRev');rb.style.display=!revived&&(St.d.coins>=REV||St.d.revT>0)?'':'none';rb.textContent=St.d.revT>0?T('استمرار مجاني')+(St.d.revT>1?' ×'+St.d.revT:''):T('تابع')+' · 🪙 '+REV;const ra=$('#bRevAd');ra.style.display=!revived&&UA.ok&&St.d.ads!==false?'':'none';ra.textContent=T('استمرار')+' 🎁';
+   $('#newb').style.display=newRec?'':'none';const rb=$('#bRev');rb.style.display=!revived&&(St.d.coins>=REV||St.d.revT>0)?'':'none';rb.textContent=St.d.revT>0?T('استمرار مجاني')+(St.d.revT>1?' ×'+St.d.revT:''):T('تابع')+' · 🪙 '+REV;const ra=$('#bRevAd');ra.style.display=!revived&&UA.ok&&St.d.ads!==false&&UA.isOn()?'':'none';ra.textContent=T('استمرار')+' 🎁';
    {const inc=Math.max(0,Math.floor(score/2)-Math.floor(rwdBase/2));if(inc>0){addCoins(inc);toast((L==='en'?'Coins from score +':'عملات من النقاط +')+inc+' 🪙')}rwdBase=score}
-   {const mx=mb();if(score>(mx.bs||0)){mx.bs=score;St.save()}}if(newRec){Au.win();emit(0,5,0,80,[0xff4f7b,0xffd23f,0x27c1b0,0x6c8cff,0xffffff],7,5,5)}if(!revived&&UA.okIn&&St.d.ads!==false){const c=(St.d.ioC=(St.d.ioC||0)+1);if(c%INT_EVERY===0&&Date.now()-(St.d.ioT||0)>=INT_COOL){St.d.ioT=Date.now();St.save();UA.showIn(IN_PLACE,function(){})}}ui()}
+   {const mx=mb();if(score>(mx.bs||0)){mx.bs=score;St.save()}}if(newRec){Au.win();emit(0,5,0,80,[0xff4f7b,0xffd23f,0x27c1b0,0x6c8cff,0xffffff],7,5,5)}if(!revived&&UA.okIn&&St.d.ads!==false&&UA.isOn()){const c=(St.d.ioC=(St.d.ioC||0)+1);if(c%INT_EVERY===0&&Date.now()-(St.d.ioT||0)>=INT_COOL){St.d.ioT=Date.now();St.save();UA.showIn(IN_PLACE,function(){})}}ui()}
  }else{B.y=1.2+Math.sin(t*3.2)*.18;B.vy=0}}
 function visual(dt){
  const menu=state===S.MENU,k=Math.min(1,dt*5);curX+=((menu?0:BX)-curX)*k;curS+=((menu?1.55:1.15)-curS)*k;curO+=((menu?(shopOn?1.6:-.2):0)-curO)*k;
@@ -491,7 +491,7 @@ bind('#bShop',()=>{shopOn=true;renderShop();ui()});
 $$('[data-t]').forEach(b=>b.addEventListener('click',()=>{Au.init();Au.click();shopTab=b.dataset.t;$$('[data-t]').forEach(x=>x.classList.toggle('on',x===b));renderShop()}));
 bind('#bMiss',()=>{renderMissions();$('#s-miss').classList.add('on')});bind('#bMissX',()=>$('#s-miss').classList.remove('on'));
 bind('#bClaim',()=>{if(mpend){St.d.coins+=mpend.bonus;St.d.mi={tier:mpend.t+1,p:[0,0,0,0,0],c:[0,0,0,0,0],bs:0};St.save();mpend=null;Au.win();sync();$('#s-daily').classList.remove('on');return}if(!dpend)return;St.d.dr={last:dpend.d,streak:dpend.st};St.d.coins+=dpend.amt;dpend=null;St.save();Au.win();sync();$('#s-daily').classList.remove('on')});bind('#bShopX',()=>{shopOn=false;ui()});bind('#bRev',()=>{if(St.d.revT>0){St.d.revT--;St.save();revive(true)}else revive()});
-bind('#bAdTest',()=>{if(!UA.ok)return;toast(L==='en'?'Loading ad…':'جارٍ التحميل…');UA.show(AD_PLACE,okd=>toast(okd?(L==='en'?'Ad works ✓':'الإعلان يعمل ✓'):T('تعذّر تشغيل الإعلان')))});
+bind('#bAdTest',()=>{if(!UA.ok||!UA.isOn())return;toast(L==='en'?'Loading ad…':'جارٍ التحميل…');UA.show(AD_PLACE,okd=>toast(okd?(L==='en'?'Ad works ✓':'الإعلان يعمل ✓'):T('تعذّر تشغيل الإعلان')))});
 bind('#bWipe',()=>{if(confirm(T('هل تريد حذف كل التقدم؟'))){try{localStorage.removeItem('tipsy3d')}catch(e){}location.reload()}});
 $$('[data-r]').forEach(r=>{r.value=St.d[r.dataset.r];r.addEventListener('input',()=>{St.d[r.dataset.r]=+r.value;St.save();Au.vol()});r.addEventListener('change',()=>{Au.init();Au.click()})});
 const CA=window.Capacitor&&Capacitor.Plugins&&Capacitor.Plugins.App;
@@ -510,28 +510,39 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden){pause();Au
 addEventListener('blur',pause);addEventListener('resize',resize);addEventListener('orientationchange',()=>setTimeout(resize,200));
 /* ---------- Unity Ads bridge (rewarded only, user-initiated) ---------- */
 const AD_GIFT=15,AD_COOL=180000,AD_PLACE='Rewarded_Android',IN_PLACE='Interstitial_Android',BN_PLACE='Banner_Android',INT_EVERY=4,INT_COOL=120000;
-const UA={P:null,ok:false,okIn:false,okBn:false,
+const UA={P:null,ok:false,okIn:false,okBn:false,online:true,ready:false,
+ isOn(){try{return navigator.onLine!==false}catch(e){return true}},
+ preload(){if(!this.ready||!this.online||!this.P||!this.P.preload)return;try{this.P.preload({type:'rewarded',placement:AD_PLACE});this.P.preload({type:'interstitial',placement:IN_PLACE})}catch(e){}},
  init(){try{const C=window.Capacitor;this.P=C&&C.Plugins&&C.Plugins.UnityAds||null;
-  this.ok=!!(this.P&&this.P.showRewarded);this.okIn=!!(this.P&&this.P.showInterstitial);this.okBn=!!(this.P&&(this.P.showBanner||this.P.hideBanner));
-  if(this.P&&this.P.initialize)try{Promise.resolve(this.P.initialize({gameId:window.UnityAdsGameId||'800443610',testMode:!!window.UnityAdsTestMode})).catch(()=>{})}catch(e){}
-  umbn()}catch(e){this.ok=false}},
- show(pl,cb){if(!this.ok){cb(false);return}
+  this.online=this.isOn();this.ok=!!(this.P&&this.P.showRewarded);this.okIn=!!(this.P&&this.P.showInterstitial);this.okBn=!!(this.P&&(this.P.showBanner||this.P.hideBanner));
+  if(this.P&&this.P.initialize&&this.online){try{Promise.resolve(this.P.initialize({gameId:window.UnityAdsGameId||'800443610',testMode:!!window.UnityAdsTestMode})).then(()=>{this.ready=true;this.preload();umbn();adStatus()}).catch(()=>{this.ready=false;setTimeout(()=>netRetry(),4000)})}catch(e){}}
+  else if(this.P)this.ready=false;
+  umbn();adStatus()}catch(e){this.ok=false}},
+ show(pl,cb){if(!this.ok||!this.isOn()){cb(false);return}
   let done=false;const fin=r=>{if(done)return;done=true;cb(!!(r&&r.rewarded))};const tm=setTimeout(()=>fin(null),20000);
   Promise.resolve(this.P.showRewarded({placement:pl})).then(r=>{clearTimeout(tm);fin(r)}).catch(()=>{clearTimeout(tm);fin(null)})},
- showIn(pl,cb){if(!this.okIn){cb(false);return}
+ showIn(pl,cb){if(!this.okIn||!this.isOn()){cb(false);return}
   let done=false;const fin=r=>{if(done)return;done=true;cb(!!(r&&r.shown))};const tm=setTimeout(()=>fin(null),15000);
   Promise.resolve(this.P.showInterstitial({placement:pl})).then(r=>{clearTimeout(tm);fin(r)}).catch(()=>{clearTimeout(tm);fin(null)})}};
 let bnOn=false;
-function umbn(){const want=UA.okBn&&St&&St.d&&St.d.ads!==false&&state===S.MENU;
+function umbn(){const want=UA.okBn&&St&&St.d&&St.d.ads!==false&&state===S.MENU&&UA.isOn();
  if(want&&!bnOn){bnOn=true;try{UA.P.showBanner({placement:BN_PLACE,position:'bottom'})}catch(e){}}
  else if(!want&&bnOn){bnOn=false;try{UA.P.hideBanner()}catch(e){}}}
 UA.init();
-function adStatus(){const el=$('#adSt');if(!el)return;el.textContent=UA.ok?T('مفعّلة ✓'):(L==='en'?'Not linked':'غير مرتبطة');$('#bAdTest').style.display=UA.ok&&St.d.ads!==false?'':'none'}
+function adStatus(){const el=$('#adSt');if(!el)return;const on=UA.isOn();
+ el.textContent=St.d.ads===false?(L==='en'?'Off (settings)':'معطّلة (الإعدادات)'):!UA.ok?(L==='en'?'Not linked':'غير مرتبطة'):!on?(L==='en'?'Offline — need internet':'غير متصل — الإعلانات بالإنترنت'):(UA.ready||!UA.P?T('مفعّلة ✓'):(L==='en'?'Connected ✓':'متصل — جاهزة ✓'));
+ $('#bAdTest').style.display=UA.ok&&St.d.ads!==false?'':'none'}
+function netRetry(){if(UA.P&&!UA.ready&&UA.isOn()){UA.init()}else{UA.online=UA.isOn();umbn();adStatus();maybeAdGift()}}
+window.addEventListener('online',()=>{UA.online=true;setTimeout(netRetry,1500)});
+window.addEventListener('offline',()=>{UA.online=false;umbn();adStatus();maybeAdGift()});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout(netRetry,900)});
+setInterval(()=>{if(!UA.ready)netRetry()},30000);
 
-function maybeAdGift(){if(UA.ok)$('#bAdGift').style.display=(Date.now()-(St.d.adT||0)>=AD_COOL&&St.d.ads!==false)?'':'none'}
+function maybeAdGift(){if(UA.ok)$('#bAdGift').style.display=(Date.now()-(St.d.adT||0)>=AD_COOL&&St.d.ads!==false&&UA.isOn())?'':'none'}
 bind('#bAdGift',()=>{if(!UA.ok||St.d.ads===false||Date.now()-(St.d.adT||0)<AD_COOL)return;
+ if(!UA.isOn()){toast(L==='en'?'Ads need an internet connection':'الإعلانات تحتاج اتصال إنترنت');return}
  UA.show(AD_PLACE,ok=>{if(ok){St.d.adT=Date.now();St.d.coins+=AD_GIFT;St.save();sync();Au.win();toast((L==='en'?'Bonus coins! +':'عملات مكافأة! +')+AD_GIFT+' 🪙')}maybeAdGift()})});
-bind('#bRevAd',()=>{if(!UA.ok||St.d.ads===false){toast(T('تعذّر تشغيل الإعلان'));return}UA.show(AD_PLACE,ok=>{if(ok)revive(true);else toast(T('تعذّر تشغيل الإعلان'))})});
+bind('#bRevAd',()=>{if(!UA.ok||St.d.ads===false){toast(T('تعذّر تشغيل الإعلان'));return}if(!UA.isOn()){toast(L==='en'?'Ads need an internet connection':'الإعلانات تحتاج اتصال إنترنت');return}UA.show(AD_PLACE,ok=>{if(ok)revive(true);else toast(T('تعذّر تشغيل الإعلان'))})});
 /* ---------- boot ---------- */
 quality();applyMap(St.d.map|0);applyLang();applySkin(St.d.skin|0);sync();reset();requestAnimationFrame(frame);
 setTimeout(()=>{$('#s-load').classList.remove('on');setState(S.MENU);dailyCheck()},600);

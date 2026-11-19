@@ -104,6 +104,29 @@ public class UnityAdsPlugin extends Plugin {
     }
 
     @PluginMethod
+    public void preload(PluginCall call) {
+        if (!UnityAds.isInitialized()) { call.resolve(); return; }
+        String type = call.getString("type", "rewarded");
+        final String pl = "interstitial".equals(type)
+                ? call.getString("placement", "Interstitial_Android")
+                : call.getString("placement", "Rewarded_Android");
+        call.setKeepAlive(true);
+        UnityAds.load(pl, new IUnityAdsLoadListener() {
+            @Override
+            public void onUnityAdsAdLoaded(String p) {
+                JSObject r = new JSObject();
+                r.put("ready", true);
+                call.resolve(r);
+            }
+
+            @Override
+            public void onUnityAdsFailedToLoad(String p, UnityAds.UnityAdsLoadError error, String message) {
+                call.resolve();
+            }
+        });
+    }
+
+    @PluginMethod
     public void showBanner(PluginCall call) {
         String pl = call.getString("placement", "Banner_Android");
         Activity a = bridge.getActivity();
