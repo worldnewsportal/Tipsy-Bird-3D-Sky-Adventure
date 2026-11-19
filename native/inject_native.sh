@@ -23,9 +23,24 @@ if ! grep -q 'com.unity3d.ads:unity-ads' "$G"; then
   sed -i "0,/dependencies {/s//dependencies {\n    implementation 'com.unity3d.ads:unity-ads:4.22.0'/" "$G"
 fi
 
-# 2) Bluetooth permissions
+# 2) Bluetooth permissions + optional hardware feature (python writer avoids sed \n pitfalls)
 if ! grep -q 'android.permission.BLUETOOTH_CONNECT' "$M"; then
-  sed -i 's#</manifest>#    <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />\n    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />\n    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />\n    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" android:usesPermissionFlags="neverForLocation" />\n    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" android:maxSdkVersion="30" />\n    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" android:maxSdkVersion="30" />\n</manifest>#' "$M"
+  python3 - "$M" <<'PYEX'
+import sys
+p = sys.argv[1]
+s = open(p).read()
+add = (''
+    '    <uses-feature android:name="android.hardware.bluetooth" android:required="false" />\n'
+    '    <uses-feature android:name="android.hardware.bluetooth_le" android:required="false" />\n'
+    '    <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />\n'
+    '    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />\n'
+    '    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />\n'
+    '    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" android:usesPermissionFlags="neverForLocation" />\n'
+    '    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" android:maxSdkVersion="30" />\n'
+    '    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" android:maxSdkVersion="30" />\n')
+s = s.replace('</manifest>', add + '</manifest>', 1)
+open(p, 'w').write(s)
+PYEX
 fi
 
 # 3) Register both plugins in MainActivity (rewrite canonically; cap add generates an empty class)
@@ -64,4 +79,5 @@ if [ -z "$BP" ] || [ "$BP" -gt "$SC" ]; then echo "FAIL: BT registerPlugin must 
 test -f "$JAVA_DIR/BluetoothPlugin.java" || { echo "FAIL: bluetooth plugin java file missing"; exit 1; }
 grep -q 'android.permission.BLUETOOTH_CONNECT' "$M" || { echo "FAIL: bluetooth permissions missing"; exit 1; }
 grep -q 'android.permission.BLUETOOTH_SCAN' "$M" || { echo "FAIL: bluetooth scan permission missing"; exit 1; }
+grep -q 'uses-feature android:name="android.hardware.bluetooth"' "$M" || { echo "FAIL: bluetooth feature declaration missing"; exit 1; }
 echo "OK: BluetoothPlugin native integration is in place (package: $APP_ID)"

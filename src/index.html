@@ -623,7 +623,7 @@ function adStatus(){const el=$('#adSt');if(!el)return;const on=UA.isOn();
  $('#bAdTest').style.display=St.d.ads!==false?'':'none'}
 function netRetry(){if(!UA.P||UA.P&&!UA.ready&&UA.isOn()){UA.init();return}UA.online=UA.isOn();UA.preload();umbn();adStatus();maybeAdGift();maybeAdCoins()}
 window.addEventListener('online',()=>{UA.online=true;setTimeout(netRetry,1500)});
-window.addEventListener('offline',()=>{UA.online=false;umbn();adStatus();maybeAdGift();maybeAdCoins();if(typeof NET!=='undefined'&&NET.inRoom)NET.abort(L==='en'?'Internet lost — room closed':'انقطع الإنترنت — أُغلقت الغرفة')});
+window.addEventListener('offline',()=>{UA.online=false;umbn();adStatus();maybeAdGift();maybeAdCoins();if(typeof NET!=='undefined'&&NET.inRoom&&!NET.isBt())NET.abort(L==='en'?'Internet lost — room closed':'انقطع الإنترنت — أُغلقت الغرفة')});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout(netRetry,900)});
 setInterval(()=>{if(!UA.ready)netRetry()},30000);
 
@@ -661,10 +661,11 @@ const BT={conns:{},buf:{},devs:{},host:false,onpeer:null,linked:null,
  joinStart(){const p=this.ap();if(!this.av()){toast(L==='en'?'Bluetooth multiplayer needs the latest Android app':'البلوتوث يحتاج أحدث نسخة — حَدِّث اللعبة');return}NET.setUI('bt');this.devs={};this.wire();
   p.paired().then(r=>{(r&&r.items||[]).forEach(d=>{if(d&&d.id)this.devs[d.id]={id:d.id,name:this.esc(d.name||d.id),paired:true}});this.renderL();try{p.scan()}catch(e){}}).catch(()=>this.renderL())},
  join(a){if(!a)return;const p=this.ap();if(!this.av())return;this.stop();this.host=false;NET.btJoin(a);
-  p.connect({address:a}).then(r=>{if(!r||!r.ok){toast(L==='en'?'Could not connect — the other phone must be hosting':'تعذَّر الاتصال — تأكد أن الهاتف الآخر يستضيف');NET.setUI('bt')}}).catch(()=>{toast(L==='en'?'Could not connect':'تعذَّر الاتصال');NET.setUI('bt')})}};
+  p.connect({address:a}).then(r=>{r=r||{};if(!r.ok){if(r.need==='enable'){toast(L==='en'?'Turn Bluetooth on and try again':'شغِّل البلوتوث ثم أعد المحاولة');try{p.enable()}catch(e){}NET.setUI('bt')}else{toast(L==='en'?'Could not connect — the other phone must be hosting':'تعذَّر الاتصال — تأكد أن الهاتف الآخر يستضيف');NET.setUI('bt')}}}).catch(()=>{toast(L==='en'?'Could not connect':'تعذّر الاتصال');NET.setUI('bt')})}};
 /* ---------- online rooms (P2P over WebRTC) ---------- */
 const NET={P:null,conns:[],players:[],code:'',host:false,live:false,inRoom:false,dead:false,seed:1,oldDiff:1,oldMap:0,diffSet:false,sendT:0,myId:null,retries:1,jt:0,
  ok(){return !!navigator.onLine&&typeof Peer!=='undefined'},
+ isBt(){return this.code==='BT'||!!(this.P&&!this.P.destroy)},
  esc:v=>String(v).replace(/[<>&"]/g,'').slice(0,12),
  name(){const v=(St.d.mpName||'').trim().slice(0,12);return this.esc(v||(L==='en'?'Bird-':'طائر-')+(100+Math.random()*900|0))},
  gen(){let c='';for(let i=0;i<5;i++)c+=MP_C[Math.random()*MP_C.length|0];return c},
