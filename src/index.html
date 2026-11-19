@@ -225,9 +225,10 @@ function makeBird(){
   add(sp,wht,[.16,.17,.12],[0,0,0],e);add(sp,blk,[.085,.1,.07],[.05,0,s*.09],e);add(sp,wht,[.03,.03,.03],[.08,.04,s*.14],e);eyes.push(e);
   add(sp,M(0xff8fa3),[.09,.07,.04],[.3,-.06,s*.34])});
  add(cn,bk,[.15,.3,.14],[.6,-.04,0],body,-Math.PI/2);
- add(cn,org,[.18,.34,.07],[-.6,.06,0],body,Math.PI/2);add(cn,org,[.14,.3,.06],[-.56,.15,0],body,Math.PI/2-.5);
+ add(cn,org,[.18,.34,.07],[-.6,.06,0],body,Math.PI/2);add(cn,org,[.14,.3,.06],[-.56,.15,0],body,Math.PI/2-.5);add(cn,org,[.16,.36,.07],[-.66,-.06,0],body,Math.PI/2);
  add(cn,org,[.1,.26,.06],[.08,.46,0],body,.35);
- const wing=s=>{const p=new THREE.Group();p.position.set(-.08,-.02,s*.4);body.add(p);add(sp,org,[.3,.09,.2],[-.1,0,s*.17],p);return p};
+ const ftc=M(0xffa03a,.5);[1,-1].forEach(s2=>{const f=add(cn,ftc,[.06,.15,.05],[.02,-.4,s2*.16],body);f.rotation.x=Math.PI});
+ const wing=s=>{const p=new THREE.Group();p.position.set(-.08,-.02,s*.4);body.add(p);add(sp,org,[.3,.09,.2],[-.1,0,s*.17],p);add(sp,yel,[.22,.07,.16],[-.3,0,s*.27],p);return p};
  const gm=M(0xffd23f,.3),A=[null,new THREE.Group(),new THREE.Group(),new THREE.Group(),new THREE.Group()];
  A.forEach(a=>{if(a){a.visible=false;body.add(a)}});
  [-.2,0,.2].forEach(z=>add(cn,gm,[.09,.28,.09],[.02,.64,z],A[1]));add(sp,gm,[.26,.07,.26],[.02,.5,0],A[1]);
@@ -361,7 +362,7 @@ function dailyCheck(){const d=today(),r=St.d.dr||{last:'',streak:0};if(r.last===
 function revive(free){if(revived||state!==S.OVER)return;if(!free){if(St.d.coins<REV)return;St.d.coins-=REV;St.save()}revived=true;B.dead=false;B.rot=0;overT=0;shown=false;B.o1=0;
  const p=pipes.filter(q=>q.x>BX-1.2).sort((a,b)=>a.x-b.x)[0];B.y=p?p.gy:2;B.vy=FLAP*.6;invul=2.5;hold=.7;shield=false;bub.visible=false;setState(S.PLAYING);flash();Au.win();sync()}
 /* ---------- pipes (pooled) ---------- */
-const coinG=new THREE.CylinderGeometry(.38,.38,.1,20).rotateX(Math.PI/2),coinM=new THREE.MeshLambertMaterial({color:0xffd23f,emissive:0x8a6a00}),shG=new THREE.IcosahedronGeometry(.4,1),shM=new THREE.MeshLambertMaterial({color:0x4fc3ff,emissive:0x1a6a9a}),mgM=new THREE.MeshLambertMaterial({color:0xff5470,emissive:0x8a1a30}),slM=new THREE.MeshLambertMaterial({color:0xb28cff,emissive:0x4a2a8a}),cyl=new THREE.CylinderGeometry(1,1,1,20,1),pM=Lm(0x57c93a),cM=Lm(0x45b02c),pipes=[];
+const coinG=new THREE.CylinderGeometry(.38,.38,.1,20).rotateX(Math.PI/2),coinM=new THREE.MeshLambertMaterial({color:0xffd23f,emissive:0x8a6a00}),shG=new THREE.IcosahedronGeometry(.4,1),shM=new THREE.MeshLambertMaterial({color:0x4fc3ff,emissive:0x1a6a9a}),mgM=new THREE.MeshLambertMaterial({color:0xff5470,emissive:0x8a1a30}),slM=new THREE.MeshLambertMaterial({color:0xb28cff,emissive:0x4a2a8a}),cyl=new THREE.CylinderGeometry(1,1,1,20,1),pM=Lm(0x57c93a),cM=Lm(0x45b02c),rM=Lm(0xffe14d),pipes=[];
 const PM=[shM,mgM,slM];
 const PERM=[{k:'magnet',ic:'🧲',n:'جذب دائم',en:'Permanent magnet',p:250,d:'جذب خفيف دائم للعملات',de:'Light permanent coin pull'},
  {k:'safe',ic:'🕴',n:'بداية آمنة دائمة',en:'Permanent safe start',p:150,d:'حصانة قصيرة في كل بداية',de:'Short invincibility every run'},
@@ -371,13 +372,13 @@ const PERM=[{k:'magnet',ic:'🧲',n:'جذب دائم',en:'Permanent magnet',p:25
  {k:'eagle',ic:'🦅',n:'عين النسر',en:'Eagle eye',p:350,d:'ضعف فرص الالتقاطات',de:'Double pickup chance'},
  {k:'perfCoin',ic:'🪙',n:'عملة العبور المثالي',en:'Perfect-coin',p:600,d:'عملة مع كل عبور مثالي',de:'A coin per perfect pass'}];
 for(let i=0;i<9;i++){const g=new THREE.Group(),p={g,x:0,gy:0,gap:3.6,scored:false,b:[]};
- for(let k=0;k<2;k++){const b=new THREE.Mesh(cyl,pM),c=new THREE.Mesh(cyl,cM);b.scale.x=b.scale.z=.72;c.scale.set(.9,.5,.9);
-  b.castShadow=b.receiveShadow=c.castShadow=true;g.add(b,c);p.b.push([b,c])}
+ for(let k=0;k<2;k++){const b=new THREE.Mesh(cyl,pM),c=new THREE.Mesh(cyl,cM),r=new THREE.Mesh(cyl,rM);b.scale.x=b.scale.z=.72;c.scale.set(.9,.5,.9);r.scale.set(.82,.16,.82);
+  b.castShadow=b.receiveShadow=c.castShadow=r.castShadow=true;g.add(b,c,r);p.b.push([b,c,r])}
  for(const k of ['ci','sh']){const m=new THREE.Mesh(k==='ci'?coinG:shG,k==='ci'?coinM:shM);m.visible=false;g.add(m);p[k]=m}
  sc.add(g);pipes.push(p)}
 function setPipe(p){const yb=p.gy-p.gap/2,yt=p.gy+p.gap/2;
- let lb=yb-.5+6,[b,c]=p.b[0];b.scale.y=lb;b.position.y=-6+lb/2;c.position.y=yb-.25;
- let lt=14-yt-.5;[b,c]=p.b[1];b.scale.y=lt;b.position.y=yt+.5+lt/2;c.position.y=yt+.25}
+ let lb=yb-.5+6,[b,c,r]=p.b[0];b.scale.y=lb;b.position.y=-6+lb/2;c.position.y=yb-.25;r.position.y=yb-.56;
+ let lt=14-yt-.5;[b,c,r]=p.b[1];b.scale.y=lt;b.position.y=yt+.5+lt/2;c.position.y=yt+.25;r.position.y=yt+.56}
 /* ---------- particles (one instanced draw call) ---------- */
 const PN=90,pI=new THREE.InstancedMesh(new THREE.IcosahedronGeometry(.13,0),new THREE.MeshBasicMaterial({color:0xffffff}),PN),
  P=[...Array(PN)].map(()=>({x:0,y:0,z:0,vx:0,vy:0,vz:0,l:0,m:1,s:1,g:14})),D=new THREE.Object3D(),col=new THREE.Color();let pc=0;
