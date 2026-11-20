@@ -126,7 +126,7 @@ input[type=range]{pointer-events:auto;width:120px;accent-color:var(--teal)}
   <div class="row"><span>المؤثرات النصية</span><button class="sw" data-k="pop"></button></div>
   <div class="row"><span>تلميح الطيران</span><button class="sw" data-k="hint"></button></div>
   <div class="row"><span>المكافآت الإعلانية</span><button class="sw" data-k="ads"></button></div>
-  <div class="row"><span>حالة الإعلانات</span><b id="adSt" style="font-size:15px"></b><button class="btn t sm" id="bAdTest" style="display:none;min-width:0;padding:9px 14px;background:#3a7ad4;box-shadow:0 6px 0 #1c4a8a">اختبار</button></div>
+  <div class="row"><span>حالة الإعلانات</span><b id="adSt" style="font-size:15px"></b><button class="btn t sm" id="bAdTest" style="display:none;min-width:0;padding:9px 14px;background:#3a7ad4;box-shadow:0 6px 0 #1c4a8a">اختبار</button></div><div id="adDiag" style="display:none;margin:-2px 2px 8px;padding:8px 12px;background:rgba(58,122,212,.12);border:1px solid rgba(120,180,255,.25);border-radius:10px;font:11px/1.8 monospace;color:#bcd6ff"></div>
   <div class="row"><span>حذف التقدّم</span><button class="btn sm" id="bWipe" style="width:auto;background:#e5484d;box-shadow:0 6px 0 #9a1f24">حذف</button></div>
   <div class="row"><span>اللغة</span><button class="btn t sm" id="bLang" style="width:auto">English</button></div><div id="crashBox" style="display:none;background:rgba(229,72,77,.12);border:1px solid #e5484d;border-radius:10px;padding:8px 10px;margin:8px 0;color:#ffb3b5;font-size:12px;white-space:pre-wrap;word-break:break-word;direction:ltr;text-align:left;max-height:130px;overflow:auto"></div><button class="btn" id="bDone">تم</button></div></section>
  </div>
@@ -145,8 +145,11 @@ let state=S.LOADING;
 /* ---------- storage ---------- */
 const St={d:{bests:[0,0,0],diff:1,coins:0,lang:null,map:0,skin:0,own:[0],dr:null,ms:null,mi:null,boost:{shield:0,magnet:0,slow:0,double:0,flapPower:0,flapSoft:0,wide:0,magLong:0,slowLong:0,coinPipe:0,headStart:0,mystery:0,eagleRun:0,safeRun:0,pfx2:0},arm:null,adT:0,revT:0,ioC:0,ioT:0,pop:true,hint:true,ads:true,fv:1,perm:{magnet:false,safe:false,gap:false,coin:false,lvlShield:false,eagle:false,perfCoin:false},sv:1,mv:1,vib:true,shk:true,fps:false,sfx:true,music:true,gq:1,},
  load(){try{const o=JSON.parse(localStorage.getItem('tipsy3d')||'{}');Object.assign(this.d,o);if(o.gq==null&&o.low===true)this.d.gq=0}catch(e){}},
- save(){try{localStorage.setItem('tipsy3d',JSON.stringify(this.d))}catch(e){}}};
+ save(){try{localStorage.setItem('tipsy3d',JSON.stringify(this.d))}catch(e){}this.mirror()},
+ mt:0,mtm:null,
+ mirror(){try{const C=window.Capacitor;if(!C)return;const p=C.getPlugin?C.getPlugin('SaveBackup'):C.Plugins&&C.Plugins.SaveBackup;if(!p||!p.backup)return;const n=Date.now();if(n-this.mt<3000){clearTimeout(this.mtm);this.mtm=setTimeout(()=>this.mirror(),3000-(n-this.mt));return}this.mt=n;Promise.resolve(p.backup({data:JSON.stringify(this.d)})).catch(()=>{})}catch(e){}}};
 St.load();
+(function(){try{const C=window.Capacitor;if(!C)return;const p=C.getPlugin?C.getPlugin('SaveBackup'):C.Plugins&&C.Plugins.SaveBackup;if(!p||!p.restore)return;Promise.resolve(p.restore()).then(function(r){const d=r&&r.data;if(!d||d.length<4||typeof d!=='string')return;let have=null;try{have=localStorage.getItem('tipsy3d')}catch(e){}if(have)return;try{localStorage.setItem('tipsy3d',d)}catch(e){return}location.reload()}).catch(function(){})}catch(e){}})();
 const DF=[{g0:4.4,gm:3.4,s0:3.5,sm:6,ac:.07},{g0:3.9,gm:2.9,s0:4,sm:7,ac:.09},{g0:3.5,gm:2.6,s0:4.8,sm:9,ac:.13}];
 const bestV=()=>St.d.bests[St.d.diff];
 let L=St.d.lang||((navigator.language||'en').toLowerCase().startsWith('ar')?'ar':'en');
@@ -569,7 +572,7 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden){pause();Au
 addEventListener('blur',pause);addEventListener('resize',resize);addEventListener('orientationchange',()=>setTimeout(resize,200));
 /* ---------- Unity Ads bridge (rewarded only, user-initiated) ---------- */
 const AD_GIFT=15,AD_COOL=180000,AD_PLACE='Rewarded_Android',IN_PLACE='Interstitial_Android',BN_PLACE='Banner_Android',INT_EVERY=4,INT_COOL=120000;
-const UA={P:null,ok:false,okIn:false,okBn:false,online:true,ready:false,nt:0,
+const UA={P:null,ok:false,okIn:false,okBn:false,online:true,ready:false,nt:0,diag:{},
  isOn(){try{return navigator.onLine!==false}catch(e){return true}},
  preload(){if(!this.ready||!this.online||!this.P||!this.P.preload)return;try{this.P.preload({type:'rewarded',placement:AD_PLACE});this.P.preload({type:'interstitial',placement:IN_PLACE})}catch(e){}},
  init(){try{const C=window.Capacitor;let pp=null;if(C&&C.getPlugin){try{pp=C.getPlugin('UnityAds')}catch(e){}}
@@ -592,7 +595,10 @@ function umbn(){const want=UA.ready&&UA.okBn&&St&&St.d&&St.d.ads!==false&&state=
 UA.init();
 function adStatus(){const el=$('#adSt');if(!el)return;const on=UA.isOn();
  el.textContent=St.d.ads===false?(L==='en'?'Off (settings)':'معطّلة (الإعدادات)'):!UA.ok?(L==='en'?'Not linked — update app':'غير مرتبطة — حدِّث التطبيق'):!on?(L==='en'?'Offline — need internet':'غير متصل — الإعلانات بالإنترنت'):(UA.ready||!UA.P?T('مفعّلة ✓'):(L==='en'?'Connected ✓':'متصل — جاهزة ✓'));
- $('#bAdTest').style.display=St.d.ads!==false?'':'none'}
+ $('#bAdTest').style.display=St.d.ads!==false?'':'none';adDiag()}
+function adDiag(){const box=$('#adDiag');if(!box)return;const D=UA.diag||{};box.innerHTML='';let n=0;
+ [['init',L==='en'?'Initialization':'التهيئة'],['Rewarded',L==='en'?'Rewarded':'المكافآت'],['Interstitial',L==='en'?'Interstitial':'البينية'],['Banner',L==='en'?'Banner':'البانر']].forEach(x=>{const v=D[x[0]];if(!v)return;n++;const d=document.createElement('div');d.textContent=x[1]+': '+v;d.dir='ltr';box.appendChild(d)});
+ box.style.display=n?'block':'none'}
 function crashBoxShow(){const box=$('#crashBox');if(!box)return;const items=[];
  let last='';try{last=window.__lastCrashB64?atob(window.__lastCrashB64):''}catch(e){last=''}
  if(last.trim())items.push('NATIVE CRASH:\n'+last.slice(-900));
@@ -603,6 +609,7 @@ function crashOverlay(txt){if(document.getElementById('crashTop'))return;const d
  d.textContent=txt;d.onclick=()=>d.remove();(document.getElementById('ui')||document.body).appendChild(d)}
 window.addEventListener('crashinfo',crashBoxShow);
 function netRetry(){if(!UA.P||UA.P&&!UA.ready&&UA.isOn()){UA.init();return}UA.online=UA.isOn();UA.preload();umbn();adStatus();maybeAdGift();maybeAdCoins()}
+window.addEventListener('adstat',e=>{try{const d=JSON.parse(e.data||'{}');if(d.k){UA.diag[d.k]=String(d.v).slice(0,120);adStatus()}}catch(_){}});
 window.addEventListener('online',()=>{UA.online=true;setTimeout(netRetry,1500)});
 window.addEventListener('offline',()=>{UA.online=false;umbn();adStatus();maybeAdGift();maybeAdCoins()});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout(netRetry,900)});

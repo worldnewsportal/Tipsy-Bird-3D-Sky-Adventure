@@ -37,11 +37,23 @@ public class UnityAdsPlugin extends Plugin {
         a.runOnUiThread(r);
     }
 
+    private void stat(String k, String v) {
+        try {
+            if (bridge == null) return;
+            JSObject d = new JSObject();
+            d.put("k", k);
+            d.put("v", v);
+            bridge.triggerWindowJSEvent("adstat", d.toString());
+        } catch (Exception ignored) { }
+    }
+
     private IUnityAdsShowListener showListener(final PluginCall call, final boolean rewarded) {
         return new IUnityAdsShowListener() {
             @Override
             public void onUnityAdsShowComplete(String placement, UnityAds.UnityAdsShowCompletionState state) {
                 try {
+                    stat(rewarded ? "Rewarded" : "Interstitial",
+                            state == UnityAds.UnityAdsShowCompletionState.COMPLETED ? "completed" : "skipped/closed");
                     JSObject r = new JSObject();
                     r.put(rewarded ? "rewarded" : "shown",
                             state == UnityAds.UnityAdsShowCompletionState.COMPLETED);
@@ -52,6 +64,7 @@ public class UnityAdsPlugin extends Plugin {
             @Override
             public void onUnityAdsShowFailure(String placement, UnityAds.UnityAdsShowError error, String message) {
                 try {
+                    stat(rewarded ? "Rewarded" : "Interstitial", "show failed: " + message);
                     JSObject r = new JSObject();
                     r.put("failed", true);
                     call.resolve(r);
@@ -95,6 +108,7 @@ public class UnityAdsPlugin extends Plugin {
             @Override
             public void onUnityAdsFailedToLoad(String p, UnityAds.UnityAdsLoadError error, String message) {
                 try {
+                    stat(rewarded ? "Rewarded" : "Interstitial", "load failed: " + message);
                     JSObject r = new JSObject();
                     r.put("failed", true);
                     call.resolve(r);
@@ -120,6 +134,7 @@ public class UnityAdsPlugin extends Plugin {
                                 JSObject r = new JSObject();
                                 r.put("initialized", true);
                                 call.resolve(r);
+                                stat("init", "ok");
                             } catch (Exception e) { }
                         }
 
@@ -129,6 +144,7 @@ public class UnityAdsPlugin extends Plugin {
                                 JSObject r = new JSObject();
                                 r.put("failed", true);
                                 call.resolve(r);
+                                stat("init", "failed: " + message);
                             } catch (Exception e) { }
                         }
                     });
@@ -204,7 +220,7 @@ public class UnityAdsPlugin extends Plugin {
     public void showBanner(PluginCall call) {
         final String pl = call.getString("placement", "Banner_Android");
         if (bridge == null || bridge.getActivity() == null) { call.resolve(); return; }
-        if (!UnityAds.isInitialized()) { call.resolve(); return; }
+        if (!UnityAds.isInitialized()) { stat("Banner", "waiting: SDK not initialized yet"); call.resolve(); return; }
         bannerTries = 0;
         call.setKeepAlive(true);
         ui(new Runnable() {
@@ -216,10 +232,10 @@ public class UnityAdsPlugin extends Plugin {
                     BannerView b = new BannerView(a, pl, new UnityBannerSize(320, 50));
                     b.setListener(new BannerView.IListener() {
                         @Override
-                        public void onBannerLoaded(BannerView bannerAdView) { }
+                        public void onBannerLoaded(BannerView bannerAdView) { stat("Banner", "ready"); }
 
                         @Override
-                        public void onBannerShown(BannerView bannerAdView) { }
+                        public void onBannerShown(BannerView bannerAdView) { stat("Banner", "visible"); }
 
                         @Override
                         public void onBannerClick(BannerView bannerAdView) { }
@@ -227,6 +243,7 @@ public class UnityAdsPlugin extends Plugin {
                         @Override
                         public void onBannerFailedToLoad(BannerView bannerAdView, BannerErrorInfo errorInfo) {
                             try {
+                                stat("Banner", "load failed: " + errorInfo.errorMessage + " (try " + bannerTries + "/3)");
                                 if (bannerTries++ < 3) {
                                     new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
                                         public void run() {

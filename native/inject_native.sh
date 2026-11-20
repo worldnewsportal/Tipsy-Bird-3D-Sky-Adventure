@@ -15,6 +15,15 @@ fi
 
 mkdir -p "$JAVA_DIR"
 cp native/UnityAdsPlugin.java "$JAVA_DIR/UnityAdsPlugin.java"
+cp native/SavePlugin.java "$JAVA_DIR/SavePlugin.java"
+
+# 2c) Auto Backup: Android/Google device backup restores sharedprefs (save mirror) after uninstall+reinstall
+if grep -q 'android:allowBackup="false"' "$M"; then
+  sed -i 's/android:allowBackup="false"/android:allowBackup="true"/' "$M"
+fi
+if ! grep -q 'android:allowBackup' "$M"; then
+  sed -i '0,/<application /s//<application\n    android:allowBackup="true"/' "$M"
+fi
 
 # 1) Gradle dependency (Unity Ads SDK 4.22.0)
 G=android/app/build.gradle
@@ -68,6 +77,7 @@ public class MainActivity extends BridgeActivity {
             }
         });
         registerPlugin(UnityAdsPlugin.class);
+        registerPlugin(SavePlugin.class);
         super.onCreate(savedInstanceState);
         try {
             File f = new File(getFilesDir(), "crash.log");
@@ -102,6 +112,20 @@ grep -q 'runOnUiThread' "$JAVA_DIR/UnityAdsPlugin.java" || { echo "FAIL: every U
 BANNER=$(grep -c 'private void ui(Runnable' "$JAVA_DIR/UnityAdsPlugin.java"); CALLS=$(grep -c 'ui(new Runnable' "$JAVA_DIR/UnityAdsPlugin.java")
 if [ "$BANNER" -ne 1 ] || [ "$CALLS" -lt 6 ]; then echo "FAIL: UI-thread guard expected on initialize/load/show/banner/hide paths (helper=$BANNER marshalled=$CALLS)"; exit 1; fi
 echo "OK: all Unity Ads calls marshalled to the UI thread"
+
+echo "--- verifying save backup (survives uninstall) ---"
+grep -q 'registerPlugin(SavePlugin.class)' "$MF" || { echo "FAIL: SaveBackup plugin not registered in MainActivity"; exit 1; }
+RSP=$(grep -n 'registerPlugin(SavePlugin.class)' "$MF" | head -1 | cut -d: -f1)
+if [ -z "$RSP" ] || [ "$RSP" -gt "$SC" ]; then echo "FAIL: registerPlugin(SavePlugin.class) must run before super.onCreate"; exit 1; fi
+test -f "$JAVA_DIR/SavePlugin.java" || { echo "FAIL: SavePlugin.java missing"; exit 1; }
+grep -q 'getSharedPreferences(PREFS' "$JAVA_DIR/SavePlugin.java" || { echo "FAIL: SavePlugin must store into SharedPreferences (Auto Backup target)"; exit 1; }
+grep -q 'android:allowBackup="true"' "$M" || { echo "FAIL: android:allowBackup=true required so Android/Google restores the save after uninstall"; exit 1; }
+echo "OK: native save backup (SharedPreferences + Auto Backup) in place"
+echo "--- verifying ad diagnostics (banner/interstitial visibility root cause) ---"
+grep -q 'triggerWindowJSEvent("adstat"' "$JAVA_DIR/UnityAdsPlugin.java" || { echo "FAIL: adstat diagnostics event missing in native plugin"; exit 1; }
+DC=$(grep -c 'stat(' "$JAVA_DIR/UnityAdsPlugin.java")
+if [ "$DC" -lt 9 ]; then echo "FAIL: expected diagnostics on init/load/show/banner paths (stat calls=$DC)"; exit 1; fi
+echo "OK: ad diagnostics wired ($DC stat points)"
 
 echo "--- verifying network permission ---"
 grep -q 'android.permission.ACCESS_NETWORK_STATE' "$M" || { echo "FAIL: ACCESS_NETWORK_STATE missing"; exit 1; }
