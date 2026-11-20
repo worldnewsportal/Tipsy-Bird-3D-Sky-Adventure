@@ -86,7 +86,7 @@ Download now and flap away! 🚀
 | `icon-512.png` | أيقونة التطبيق (Square 512) |
 | `featured-1024x500.png` | الصورة المميزة Featured image |
 | `screenshots/shot-1-menu.png` | لقطة 1: القائمة الرئيسية |
-| `screenshots/shot-2-day.png` | لقطة 2: اللعب (نهار + عملات + درع) |
+| `screenshots/shot-2-meadow.png` | لقطة 2: اللعب (نهار + عملات + درع) |
 | `screenshots/shot-3-volcano.png` | لقطة 3: ماب البركان + مفتاح 🔑 |
 | `screenshots/shot-4-space.png` | لقطة 4: ماب الفضاء |
 | `screenshots/shot-5-ocean.png` | لقطة 5: ماب المحيط + سمكة وفقاعات |
