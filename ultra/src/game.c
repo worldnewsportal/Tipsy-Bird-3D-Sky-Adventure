@@ -44,7 +44,7 @@ static unsigned int rs = 0xBEEF1234u;
 static unsigned int rnd32(void){ rs^=rs<<13; rs^=rs>>17; rs^=rs<<5; return rs; }
 static float rf(void){ return (float)(rnd32()&0xFFFFFF)/16777216.0f; }
 static float rr(float a,float b){ return a+(b-a)*rf(); }
-static int   ri(int a,int b){ return a+(int)(rf()*(b-a+1))&0x7FFFFFFF; } /* careful use */
+static int   ri(int a,int b){ return a+((int)(rf()*(b-a+1))&0x7FFFFFFF); }
 static float clampf(float v,float a,float b){ return v<a?a:(v>b?b:v); }
 static float lerpf (float a,float b,float t){ return a+(b-a)*t; }
 static Vector3 V3(float x,float y,float z){ Vector3 v={x,y,z}; return v; }
@@ -69,22 +69,24 @@ typedef struct {
     int qual, shakeOn, sfxV, musV;
     int runs; long long totCoins;
     Msn msn[3];
+    int sens;        /* steering sensitivity % (70 / 100 / 150) */
+    int showFps;     /* FPS counter overlay */
 } Sv;
 static Sv S;
-static char savePath[256] = "tipsy_ultra.bin";
+static char savePath[512] = "tipsy_ultra.bin";
 
 static void findSavePath(void){
-    char cmd[256]={0};
+    char cmd[300]={0};
     FILE *f=fopen("/proc/self/cmdline","rb");
     if(f){ size_t n=fread(cmd,1,255,f); (void)n; fclose(f); }
     char *sp=strchr(cmd,' '); if(sp)*sp=0;
     if(!cmd[0]) strcpy(cmd,"com.tipsybird.raylib");
-    char dir[256]; snprintf(dir,sizeof dir,"/data/data/%s/files",cmd);
+    char dir[400]; snprintf(dir,sizeof dir,"/data/data/%s/files",cmd);
     mkdir(dir,0777);
     snprintf(savePath,sizeof savePath,"%s/tipsy_ultra.bin",dir);
 }
 static void saveWrite(void){
-    S.magic=0x54425531u;
+    S.magic=0x54425532u;
     FILE *f=fopen(savePath,"wb");
     if(!f) return;
     fwrite(&S,sizeof S,1,f); fclose(f);
@@ -94,7 +96,7 @@ static void saveRead(void){
     FILE *f=fopen(savePath,"rb");
     if(!f) return;
     Sv t; memset(&t,0,sizeof t);
-    if(fread(&t,sizeof t,1,f)==1 && t.magic==0x54425531u) S=t;
+    if(fread(&t,sizeof t,1,f)==1 && t.magic==0x54425532u) S=t;
     fclose(f);
 }
 
@@ -171,7 +173,8 @@ static void auCB(void *buf, unsigned int frames){
                 mix+=waveForm(t->type,phs[k])*env*t->vol*sv;
             }
         }
-        if(mix> 1) mix= 1; if(mix<-1) mix=-1;
+        if(mix> 1)  mix= 1;
+        if(mix<-1) mix=-1;
         short s=(short)(mix*30000.0f);
         *out++=s; *out++=s;
     }
@@ -192,6 +195,7 @@ static void audioInit(void){
 typedef struct { Vector3 p,v; float age,life,size; Color c; int on; } Part;
 static Part parts[PMAX]; static int pCur=0;
 static void emit(Vector3 p, Vector3 v, float life, float size, Color c, int n){
+    n=(int)(n*(S.qual==0?0.4f:(S.qual==1?0.7f:1.0f))+0.9f); if(n<1)n=1;
     for(int i=0;i<n;i++){
         Part *q=&parts[pCur]; pCur=(pCur+1)%PMAX;
         q->p=p; q->v=V3(v.x+rr(-2,2),v.y+rr(-2,2),v.z+rr(-1,1));
@@ -277,8 +281,8 @@ static Obs obs[OBSN];
 static Coin coins[CON];
 static Pw pws[PWN];
 static Dec dec[DMAX];
-static float spd, lastBase, farZ, travel, stopT, slowmo, shake, overT, skyT;
-static int score, stage, countN, runCoins, runPerf, streak, curSkin, countT, medalT;
+static float spd, lastBase, farZ, travel, stopT, slowmo, shake, overT;
+static int score, countN, runCoins, runPerf, streak, curSkin, countT, medalT;
 static float shieldT, magT, slowT, dblT, hudPulse, toastT, revived;
 static char toastTxt[64]; static Color toastC;
 static int state=ST_SPLASH;
@@ -319,6 +323,8 @@ static void toast(const char*t,Color c){ snprintf(toastTxt,sizeof toastTxt,"%s",
 
 /* touch/mouse unified */
 static Vector2 tPos; static int tDownPrev=0, tJust=0, tRel=0; static float tHoldT=0;
+static float steerPrevX=-1;
+static float splashT=0;
 static void pollTouch(void){
     int n=GetTouchPointCount(); int d=0; Vector2 p={-1,-1};
     if(n>0){ p=GetTouchPosition(0); d=1; }
@@ -502,11 +508,18 @@ static float obsX(Obs*o,float t){
 
 /* player update during PLAY */
 static void updateBird(float dt,float t){
-    /* steering */
-    if(tDownPrev&&state==ST_PLAY){
-        float sx=(float)GetScreenWidth();
-        bird.tx=((tPos.x/sx)*2-1)*OP*0.92f;
+    /* steering: RELATIVE drag — finger never warps the bird, smooth & pro */
+    if(state==ST_PLAY){
+        if(tJust) steerPrevX=tPos.x;
+        else if(tDownPrev&&steerPrevX>=0){
+            float sx=(float)GetScreenWidth();
+            float k=(S.sens<=0?1.0f:S.sens/100.0f);
+            bird.tx+=(tPos.x-steerPrevX)/sx*18.0f*k;
+            steerPrevX=tPos.x;
+        }
     }
+    if(IsKeyDown(KEY_LEFT))  bird.tx-=16*dt;
+    if(IsKeyDown(KEY_RIGHT)) bird.tx+=16*dt;
     bird.x=lerpf(bird.x,bird.tx,clampf(dt*6,0,1));
     bird.x=clampf(bird.x,-OP+0.8f,OP-0.8f);
 
@@ -705,8 +718,8 @@ static void drawBird(void){
     rlPushMatrix(); rlTranslatef(0.55f,0.05f,0.2f); rlRotatef(25,0,1,0);
     DrawCube(V3(0,0,0),0.5f,0.14f,0.3f,sk->wing); rlPopMatrix();
     /* body + belly */
-    DrawSphere(V3(0,0,0),BR,sk->body);
-    DrawSphere(V3(0,-0.16f,-0.12f),0.38f,sk->belly);
+    DrawSphereEx(V3(0,0,0),BR,8,12,sk->body);
+    DrawSphereEx(V3(0,-0.16f,-0.12f),0.38f,6,10,sk->belly);
     /* wings */
     float wa=sinf(bird.wing)*0.9f;
     for(int s=-1;s<=1;s+=2){
@@ -721,12 +734,12 @@ static void drawBird(void){
     DrawCylinder(V3(0,0,0),0.06f,0.17f,0.34f,10,sk->beak);
     rlPopMatrix();
     /* eyes */
-    DrawSphere(V3(0.16f,0.2f,-0.38f),0.13f,WHITE);
-    DrawSphere(V3(-0.16f,0.2f,-0.38f),0.13f,WHITE);
-    DrawSphere(V3(0.16f,0.2f,-0.48f),0.06f,INK);
-    DrawSphere(V3(-0.16f,0.2f,-0.48f),0.06f,INK);
+    DrawSphereEx(V3(0.16f,0.2f,-0.38f),0.13f,4,6,WHITE);
+    DrawSphereEx(V3(-0.16f,0.2f,-0.38f),0.13f,4,6,WHITE);
+    DrawSphereEx(V3(0.16f,0.2f,-0.48f),0.06f,3,5,INK);
+    DrawSphereEx(V3(-0.16f,0.2f,-0.48f),0.06f,3,5,INK);
     /* shield bubble */
-    if(bird.shield||shieldT>0) DrawSphere(V3(0,0,0),1.05f,LC(TEAL,WHITE,0.35f));
+    if(bird.shield||shieldT>0) DrawSphereEx(V3(0,0,0),1.05f,10,14,LC(TEAL,WHITE,0.35f));
     rlPopMatrix();
 }
 static void drawObs(Obs*o){
@@ -768,7 +781,7 @@ static void drawWorld(void){
     /* speed stripes */
     {
         float off=fmodf(travel,10.0f);
-        for(int i=0;i<16;i++){
+        for(int i=0;i<12;i++){
             float z=8.0f-i*10.0f+off;
             DrawCube(V3(0,FLOORY-0.01f,z),0.35f,0.05f,4.0f,
                      fogCol(LC(cGrnd,CREAM,0.35f),z,cFog));
@@ -783,8 +796,8 @@ static void drawWorld(void){
         Color dcd=fogCol(LC(cDeco,INK,0.5f),p.z,cFog);
         if(d->type==0){
             DrawCylinder(p,0.22f*s,0.30f*s,2.2f*s,7,dcd);
-            DrawSphere(V3(p.x,p.y+2.4f*s,p.z),1.1f*s,fogCol(LC(cDeco,CREAM,0.25f),p.z,cFog));
-            DrawSphere(V3(p.x+0.5f*s,p.y+1.7f*s,p.z),0.8f*s,dc);
+            DrawSphereEx(V3(p.x,p.y+2.4f*s,p.z),1.1f*s,5,8,fogCol(LC(cDeco,CREAM,0.25f),p.z,cFog));
+            DrawSphereEx(V3(p.x+0.5f*s,p.y+1.7f*s,p.z),0.8f*s,4,7,dc);
         }else if(d->type==1){
             DrawSphereEx(p,0.9f*s,3,6,dc);
             DrawSphereEx(V3(p.x+0.7f*s,p.y-0.3f,p.z+0.4f),0.55f*s,3,6,dcd);
@@ -795,20 +808,20 @@ static void drawWorld(void){
         if(BMS[biome].embers&&S.qual>0&&(i&3)==0)
             emit(V3(p.x,p.y+1,p.z),V3(0,rr(2,5),1),1.2f,0.16f,ORG,1);
     }
-    for(int i=0;i<OBSN;i++) if(obs[i].kind>=0) drawObs(&obs[i]);
+    for(int i=0;i<OBSN;i++) if(obs[i].kind>=0&&obs[i].z>-125) drawObs(&obs[i]);
     for(int i=0;i<CON;i++){
-        if(!coins[i].on) continue;
+        if(!coins[i].on||coins[i].z<-110) continue;
         float pl=0.30f+0.05f*sinf(gT*6+i);
-        DrawSphereEx(V3(coins[i].x,coins[i].y,coins[i].z),pl,4,10,fogCol(AURUM,coins[i].z,cFog));
+        DrawSphereEx(V3(coins[i].x,coins[i].y,coins[i].z),pl,3,8,fogCol(AURUM,coins[i].z,cFog));
     }
     for(int i=0;i<PWN;i++){
-        if(!pws[i].on) continue;
+        if(!pws[i].on||pws[i].z<-110) continue;
         static const Color pcol[4]={{39,193,176,255},{255,99,132,255},{90,140,255,255},{255,201,77,255}};
         Color cc=fogCol(pcol[pws[i].kind],pws[i].z,cFog);
         Vector3 q=V3(pws[i].x,pws[i].y+sinf(gT*3)*0.3f,pws[i].z);
         rlPushMatrix(); rlTranslatef(q.x,q.y,q.z); rlRotatef(gT*70,0,1,0);
         DrawCubeWires(V3(0,0,0),0.95f,0.95f,0.95f,cc);
-        DrawSphere(V3(0,0,0),0.32f,cc);
+        DrawSphereEx(V3(0,0,0),0.32f,4,6,cc);
         rlPopMatrix();
     }
     partsDraw(cFog);
@@ -818,7 +831,7 @@ static void drawWorld(void){
 
 /* ================================================= 2D screens / HUD ====== */
 enum { B_PLAY=1,B_SHOP,B_SET,B_MSN,B_BACK,B_RESUME,B_MENU,B_RETRY,B_REVIVE,
-       B_SND,B_MUS,B_QUAL,B_SHAKE,B_WIPE,B_PAUSE,B_SKIN0=100 };
+       B_SND,B_MUS,B_QUAL,B_SHAKE,B_WIPE,B_PAUSE,B_SENP,B_FPST,B_SKIN0=100 };
 
 static void centerTitle(const char*t,int y,int size,Color c){
     int W=GetScreenWidth();
@@ -839,6 +852,7 @@ static void hudBar(void){
     DrawText(txt,(W-MeasureText(txt,sb))/2,H/12,sb,WHITE);
     DrawText(TextFormat("x %d",runCoins),20,H/12,fs,AURUM);
     DrawText(TextFormat("Best %d",S.best),20,H/12+fs*7/4,fs,CREAM);
+    if(S.showFps) DrawText(TextFormat("%d FPS",GetFPS()),W-130,H/12,fs,GOLD);
     struct { float t; Color c; float max; } bts[4]={{shieldT,{39,193,176,255},10},{magT,ROSEC,9},{slowT,{90,140,255,255},7},{dblT,AURUM,9}};
     int k=0;
     for(int i=0;i<4;i++) if(bts[i].t>0){
@@ -930,15 +944,23 @@ static void uiShop(void){
 }
 static void uiSet(void){
     int W=GetScreenWidth(),H=GetScreenHeight();
-    panel(W/2,H/2,W*0.6f,H*0.72f);
-    centerTitle("SETTINGS",H*0.18f,H/12,INK);
-    float bw=W*0.40f,bh=H/10;
-    addBtn(W/2-bw-20,H*0.30f,bw,bh,TextFormat("Sound  %d%%",S.sfxV),B_SND,TEAL);
-    addBtn(W/2+20   ,H*0.30f,bw,bh,TextFormat("Music  %d%%",S.musV),B_MUS,TEAL);
-    addBtn(W/2-bw-20,H*0.44f,bw,bh,TextFormat("Quality %s",S.qual==2?"HIGH":S.qual==1?"MED":"LOW"),B_QUAL,AURUM);
-    addBtn(W/2+20   ,H*0.44f,bw,bh,TextFormat("Shake  %s",S.shakeOn?"ON":"OFF"),B_SHAKE,INK);
-    addBtn(W/2-bw/2,H*0.60f,bw,bh,wipeArm?"REALLY RESET?":"Reset Save",B_WIPE,ROSEC);
-    centerTitle("Tap Sound / Music to lower by 25%",H*0.75f,H/34,LC(INK,CREAM,0.35f));
+    panel(W/2,H*0.52f,W*0.66f,H*0.86f);
+    centerTitle("SETTINGS",H*0.14f,H/14,INK);
+    float bw=W*0.28f,bh=H/9,gx=W*0.014f;
+    float x1=W/2-bw-gx/2, x2=W/2+gx/2;
+    addBtn(x1,H*0.20f,bw,bh,TextFormat("Sound  %d%%",S.sfxV),B_SND,TEAL);
+    addBtn(x2,H*0.20f,bw,bh,TextFormat("Music  %d%%",S.musV),B_MUS,TEAL);
+    addBtn(x1,H*0.31f,bw,bh,TextFormat("Quality  %s",S.qual==2?"HIGH":S.qual==1?"MED":"LOW"),B_QUAL,AURUM);
+    addBtn(x2,H*0.31f,bw,bh,TextFormat("Steering %s",S.sens>=150?"HIGH":(S.sens>=95?"NORMAL":"SOFT")),B_SENP,(Color){150,120,255,255});
+    addBtn(x1,H*0.42f,bw,bh,TextFormat("Shake   %s",S.shakeOn?"ON":"OFF"),B_SHAKE,INK);
+    addBtn(x2,H*0.42f,bw,bh,TextFormat("FPS HUD %s",S.showFps?"ON":"OFF"),B_FPST,INK);
+    addBtn(W/2-bw/2,H*0.53f,bw,bh,wipeArm?"REALLY RESET?":"Reset Save",B_WIPE,ROSEC);
+    centerTitle(TextFormat("Best %d      Coins %d      Runs %d      Earned %lld",
+        S.best,S.coins,S.runs,S.totCoins),(int)(H*0.67f),H/32,LC(INK,CREAM,0.35f));
+    centerTitle("Tipsy Bird Ultra v1.0  |  engine: raylib 5.5  |  100% offline",
+        (int)(H*0.74f),H/40,LC(INK,CREAM,0.5f));
+    centerTitle("Sound/Music: tap = -25%   |   Steering: SOFT < > HIGH",
+        (int)(H*0.80f),H/40,LC(INK,CREAM,0.5f));
     addBtn(20,H-90,140,70,"Back",B_BACK,ORG);
 }
 static void uiMsn(void){
@@ -1008,6 +1030,8 @@ static void doBtn(int id){
             toast("Revived!",TEAL);
         }else toast("Not enough coins",ROSEC);
         break;
+    case B_SENP: S.sens=(S.sens>=150)?70:(S.sens>=95?150:100); saveWrite(); break;
+    case B_FPST: S.showFps=!S.showFps; saveWrite(); break;
     case B_SND:  S.sfxV-=25; if(S.sfxV<0)S.sfxV=100; saveWrite(); break;
     case B_MUS:  S.musV-=25; if(S.musV<0)S.musV=100; saveWrite(); break;
     case B_QUAL: S.qual=(S.qual+1)%3; saveWrite(); break;
@@ -1032,11 +1056,12 @@ int main(int argc,char**argv){
     int nowned=0; for(int i=0;i<8;i++) if((S.owned>>i)&1) nowned++;
     if(nowned==0) S.owned=1;
     if(S.sfxV<=0&&S.musV<=0&&S.best==0&&S.runs==0){ S.sfxV=80;S.musV=70;S.shakeOn=1; }
+    if(S.sens<=0) S.sens=100;
+    if(S.showFps<0) S.showFps=0;
     int fresh=1; for(int i=0;i<3;i++) if(S.msn[i].goal>0) fresh=0;
     if(fresh){ for(int k=0;k<3;k++) msnNew(k); }
 
     SetTraceLogLevel(LOG_WARNING);
-    SetConfigFlags(FLAG_MSAA_4X_HINT);
     InitWindow(0,0,"Tipsy Bird Ultra");
     SetTargetFPS(60);
     audioInit();
@@ -1068,7 +1093,11 @@ int main(int argc,char**argv){
 
         switch(state){
         case ST_SPLASH:
-            if(tJust||IsKeyPressed(KEY_SPACE)) state=ST_MENU;
+            splashT+=dt;
+            if(splashT>2.7f||tJust||IsKeyPressed(KEY_SPACE)){
+                state=ST_MENU; splashT=0;
+                sfxPower();
+            }
             break;
         case ST_MENU:
             updateWorld(dt*0.2f);
@@ -1098,11 +1127,14 @@ int main(int argc,char**argv){
         BeginDrawing();
         drawWorld();
         switch(state){
-        case ST_SPLASH:
-            centerTitle("TIPSY BIRD ULTRA",GetScreenHeight()*0.35f,GetScreenHeight()/10,AURUM);
-            centerTitle("a raylib rebuild",GetScreenHeight()*0.50f,GetScreenHeight()/26,CREAM);
-            centerTitle("tap to continue",GetScreenHeight()*0.62f,GetScreenHeight()/30,CREAM);
-            break;
+        case ST_SPLASH:{
+            int H4=GetScreenHeight();
+            float a1=splashT<0.4f?splashT/0.4f:(splashT<2.1f?1.0f:clampf((2.7f-splashT)/0.6f,0,1));
+            float a2=clampf((splashT-1.1f)/0.5f,0,1)*clampf((2.7f-splashT)/0.6f,0,1);
+            centerTitle("TIPSY STUDIOS",(int)(H4*0.42f),H4/24,Fade(CREAM,a1));
+            centerTitle("p r e s e n t s",(int)(H4*0.52f),H4/36,Fade(CREAM,a1*0.75f));
+            centerTitle("TIPSY BIRD ULTRA",(int)(H4*0.64f),H4/9,Fade(AURUM,a2));
+            break;}
         case ST_MENU:   uiMenu(); break;
         case ST_READY:  uiReady(); break;
         case ST_PLAY:
