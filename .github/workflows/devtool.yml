@@ -39,6 +39,7 @@ jobs:
             /tmp/res.zip
           $BT/aapt2 dump badging /tmp/base.apk | grep "package: name='com.tipsybird.devtool'"
           javac -classpath $PLAT/android.jar -d /tmp/classes $(find devtool/src -name '*.java')
+          mkdir -p /tmp/dex
           $BT/d8 --release --lib $PLAT/android.jar --min-api 23 --output /tmp/dex $(find /tmp/classes -name '*.class')
           test -f /tmp/dex/classes.dex
           mkdir -p /tmp/stage
