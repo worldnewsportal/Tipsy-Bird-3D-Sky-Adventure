@@ -3,8 +3,11 @@
     package="com.tipsybird.devtool"
     android:versionCode="1" android:versionName="1.0">
   <uses-permission android:name="android.permission.INTERNET"/>
+  <queries>
+    <package android:name="com.tipsybird.game"/>
+  </queries>
   <application
-      android:label="Tipsy DevTools"
+      android:label="Tipsy Tools"
       android:icon="@mipmap/ic_launcher"
       android:allowBackup="true"
       android:theme="@android:style/Theme.Material.NoActionBar">
