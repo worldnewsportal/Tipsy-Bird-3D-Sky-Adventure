@@ -30,21 +30,32 @@ public class UnityAdsPlugin extends Plugin {
     private BannerView banner;
     private int bannerTries = 0;
 
+    private void ui(Runnable r) {
+        if (bridge == null) return;
+        Activity a = bridge.getActivity();
+        if (a == null || a.isFinishing()) return;
+        a.runOnUiThread(r);
+    }
+
     private IUnityAdsShowListener showListener(final PluginCall call, final boolean rewarded) {
         return new IUnityAdsShowListener() {
             @Override
             public void onUnityAdsShowComplete(String placement, UnityAds.UnityAdsShowCompletionState state) {
-                JSObject r = new JSObject();
-                r.put(rewarded ? "rewarded" : "shown",
-                        state == UnityAds.UnityAdsShowCompletionState.COMPLETED);
-                call.resolve(r);
+                try {
+                    JSObject r = new JSObject();
+                    r.put(rewarded ? "rewarded" : "shown",
+                            state == UnityAds.UnityAdsShowCompletionState.COMPLETED);
+                    call.resolve(r);
+                } catch (Exception e) { }
             }
 
             @Override
             public void onUnityAdsShowFailure(String placement, UnityAds.UnityAdsShowError error, String message) {
-                JSObject r = new JSObject();
-                r.put("failed", true);
-                call.resolve(r);
+                try {
+                    JSObject r = new JSObject();
+                    r.put("failed", true);
+                    call.resolve(r);
+                } catch (Exception e) { }
             }
 
             @Override
@@ -59,15 +70,35 @@ public class UnityAdsPlugin extends Plugin {
         return new IUnityAdsLoadListener() {
             @Override
             public void onUnityAdsAdLoaded(String p) {
-                Activity a = bridge.getActivity();
-                UnityAds.show(a, placement, new UnityAdsShowOptions(), showListener(call, rewarded));
+                ui(new Runnable() {
+                    public void run() {
+                        try {
+                            Activity a = bridge != null ? bridge.getActivity() : null;
+                            if (a == null || a.isFinishing()) {
+                                JSObject r = new JSObject();
+                                r.put("failed", true);
+                                call.resolve(r);
+                                return;
+                            }
+                            UnityAds.show(a, placement, new UnityAdsShowOptions(), showListener(call, rewarded));
+                        } catch (Exception e) {
+                            try {
+                                JSObject r = new JSObject();
+                                r.put("failed", true);
+                                call.resolve(r);
+                            } catch (Exception ignored) { }
+                        }
+                    }
+                });
             }
 
             @Override
             public void onUnityAdsFailedToLoad(String p, UnityAds.UnityAdsLoadError error, String message) {
-                JSObject r = new JSObject();
-                r.put("failed", true);
-                call.resolve(r);
+                try {
+                    JSObject r = new JSObject();
+                    r.put("failed", true);
+                    call.resolve(r);
+                } catch (Exception e) { }
             }
         };
     }
@@ -79,19 +110,35 @@ public class UnityAdsPlugin extends Plugin {
         Boolean tm = call.getBoolean("testMode");
         if (tm != null) testMode = tm;
         call.setKeepAlive(true);
-        UnityAds.initialize(getContext(), gameId, testMode, new IUnityAdsInitializationListener() {
-            @Override
-            public void onInitializationComplete() {
-                JSObject r = new JSObject();
-                r.put("initialized", true);
-                call.resolve(r);
-            }
+        ui(new Runnable() {
+            public void run() {
+                try {
+                    UnityAds.initialize(getContext(), gameId, testMode, new IUnityAdsInitializationListener() {
+                        @Override
+                        public void onInitializationComplete() {
+                            try {
+                                JSObject r = new JSObject();
+                                r.put("initialized", true);
+                                call.resolve(r);
+                            } catch (Exception e) { }
+                        }
 
-            @Override
-            public void onInitializationFailed(UnityAds.UnityAdsInitializationError error, String message) {
-                JSObject r = new JSObject();
-                r.put("failed", true);
-                call.resolve(r);
+                        @Override
+                        public void onInitializationFailed(UnityAds.UnityAdsInitializationError error, String message) {
+                            try {
+                                JSObject r = new JSObject();
+                                r.put("failed", true);
+                                call.resolve(r);
+                            } catch (Exception e) { }
+                        }
+                    });
+                } catch (Exception e) {
+                    try {
+                        JSObject r = new JSObject();
+                        r.put("failed", true);
+                        call.resolve(r);
+                    } catch (Exception ignored) { }
+                }
             }
         });
     }
@@ -100,16 +147,24 @@ public class UnityAdsPlugin extends Plugin {
     public void showRewarded(PluginCall call) {
         if (!UnityAds.isInitialized()) { call.resolve(); return; }
         call.setKeepAlive(true);
-        String pl = call.getString("placement", "Rewarded_Android");
-        UnityAds.load(pl, loadListener(pl, true, call));
+        final String pl = call.getString("placement", "Rewarded_Android");
+        ui(new Runnable() {
+            public void run() {
+                try { UnityAds.load(pl, loadListener(pl, true, call)); } catch (Exception e) { call.resolve(); }
+            }
+        });
     }
 
     @PluginMethod
     public void showInterstitial(PluginCall call) {
         if (!UnityAds.isInitialized()) { call.resolve(); return; }
         call.setKeepAlive(true);
-        String pl = call.getString("placement", "Interstitial_Android");
-        UnityAds.load(pl, loadListener(pl, false, call));
+        final String pl = call.getString("placement", "Interstitial_Android");
+        ui(new Runnable() {
+            public void run() {
+                try { UnityAds.load(pl, loadListener(pl, false, call)); } catch (Exception e) { call.resolve(); }
+            }
+        });
     }
 
     @PluginMethod
@@ -120,65 +175,93 @@ public class UnityAdsPlugin extends Plugin {
                 ? call.getString("placement", "Interstitial_Android")
                 : call.getString("placement", "Rewarded_Android");
         call.setKeepAlive(true);
-        UnityAds.load(pl, new IUnityAdsLoadListener() {
-            @Override
-            public void onUnityAdsAdLoaded(String p) {
-                JSObject r = new JSObject();
-                r.put("ready", true);
-                call.resolve(r);
-            }
+        ui(new Runnable() {
+            public void run() {
+                try {
+                    UnityAds.load(pl, new IUnityAdsLoadListener() {
+                        @Override
+                        public void onUnityAdsAdLoaded(String p) {
+                            try {
+                                JSObject r = new JSObject();
+                                r.put("ready", true);
+                                call.resolve(r);
+                            } catch (Exception e) { }
+                        }
 
-            @Override
-            public void onUnityAdsFailedToLoad(String p, UnityAds.UnityAdsLoadError error, String message) {
-                call.resolve();
+                        @Override
+                        public void onUnityAdsFailedToLoad(String p, UnityAds.UnityAdsLoadError error, String message) {
+                            try { call.resolve(); } catch (Exception e) { }
+                        }
+                    });
+                } catch (Exception e) {
+                    try { call.resolve(); } catch (Exception ignored) { }
+                }
             }
         });
     }
 
     @PluginMethod
     public void showBanner(PluginCall call) {
-        String pl = call.getString("placement", "Banner_Android");
+        final String pl = call.getString("placement", "Banner_Android");
         if (bridge == null || bridge.getActivity() == null) { call.resolve(); return; }
-        Activity a = bridge.getActivity();
-        if (banner != null) { banner.destroy(); banner = null; }
         bannerTries = 0;
-        BannerView b = new BannerView(a, pl, new UnityBannerSize(320, 50));
-        b.setListener(new BannerView.IListener() {
-            @Override
-            public void onBannerLoaded(BannerView bannerAdView) { }
+        call.setKeepAlive(true);
+        ui(new Runnable() {
+            public void run() {
+                try {
+                    if (banner != null) { try { banner.destroy(); } catch (Exception e) { } banner = null; }
+                    Activity a = bridge.getActivity();
+                    if (a == null || a.isFinishing()) { call.resolve(); return; }
+                    BannerView b = new BannerView(a, pl, new UnityBannerSize(320, 50));
+                    b.setListener(new BannerView.IListener() {
+                        @Override
+                        public void onBannerLoaded(BannerView bannerAdView) { }
 
-            @Override
-            public void onBannerShown(BannerView bannerAdView) { }
+                        @Override
+                        public void onBannerShown(BannerView bannerAdView) { }
 
-            @Override
-            public void onBannerClick(BannerView bannerAdView) { }
+                        @Override
+                        public void onBannerClick(BannerView bannerAdView) { }
 
-            @Override
-            public void onBannerFailedToLoad(BannerView bannerAdView, BannerErrorInfo errorInfo) {
-                if (bannerTries++ < 3) {
-                    new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
-                        public void run() {
-                            try { bannerAdView.load(new UnityAdsLoadOptions()); } catch (Exception ignored) { }
+                        @Override
+                        public void onBannerFailedToLoad(BannerView bannerAdView, BannerErrorInfo errorInfo) {
+                            try {
+                                if (bannerTries++ < 3) {
+                                    new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
+                                        public void run() {
+                                            try {
+                                                if (banner != null) banner.load(new UnityAdsLoadOptions());
+                                            } catch (Exception ignored) { }
+                                        }
+                                    }, 5000);
+                                }
+                            } catch (Exception e) { }
                         }
-                    }, 5000);
-                }
-            }
 
-            @Override
-            public void onBannerLeftApplication(BannerView bannerAdView) { }
+                        @Override
+                        public void onBannerLeftApplication(BannerView bannerAdView) { }
+                    });
+                    ViewGroup root = a.findViewById(android.R.id.content);
+                    root.addView(b, new FrameLayout.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT,
+                            Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL));
+                    banner = b;
+                    b.load(new UnityAdsLoadOptions());
+                } catch (Exception e) { }
+                call.resolve();
+            }
         });
-        ViewGroup root = a.findViewById(android.R.id.content);
-        root.addView(b, new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT,
-                Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL));
-        banner = b;
-        b.load(new UnityAdsLoadOptions());
-        call.resolve();
     }
 
     @PluginMethod
     public void hideBanner(PluginCall call) {
-        if (banner != null) { banner.destroy(); banner = null; }
+        ui(new Runnable() {
+            public void run() {
+                try {
+                    if (banner != null) { banner.destroy(); banner = null; }
+                } catch (Exception e) { }
+            }
+        });
         call.resolve();
     }
 }

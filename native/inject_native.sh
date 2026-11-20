@@ -97,6 +97,11 @@ RP=$(grep -n 'registerPlugin(UnityAdsPlugin.class)' "$MF" | head -1 | cut -d: -f
 if [ -z "$RP" ] || [ -z "$SC" ] || [ "$RP" -gt "$SC" ]; then echo "FAIL: registerPlugin must be called BEFORE super.onCreate (Capacitor requirement)"; exit 1; fi
 test -f "$JAVA_DIR/UnityAdsPlugin.java" || { echo "FAIL: plugin java file missing"; exit 1; }
 echo "OK: UnityAdsPlugin native integration is in place (package: $APP_ID)"
+echo "--- verifying UI-thread safety (app-exit-on-online root cause) ---"
+grep -q 'runOnUiThread' "$JAVA_DIR/UnityAdsPlugin.java" || { echo "FAIL: every Unity Ads call and View touch must run on the UI thread (Capacitor dispatches @PluginMethod on a background HandlerThread)"; exit 1; }
+BANNER=$(grep -c 'private void ui(Runnable' "$JAVA_DIR/UnityAdsPlugin.java"); CALLS=$(grep -c 'ui(new Runnable' "$JAVA_DIR/UnityAdsPlugin.java")
+if [ "$BANNER" -ne 1 ] || [ "$CALLS" -lt 6 ]; then echo "FAIL: UI-thread guard expected on initialize/load/show/banner/hide paths (helper=$BANNER marshalled=$CALLS)"; exit 1; fi
+echo "OK: all Unity Ads calls marshalled to the UI thread"
 
 echo "--- verifying network permission ---"
 grep -q 'android.permission.ACCESS_NETWORK_STATE' "$M" || { echo "FAIL: ACCESS_NETWORK_STATE missing"; exit 1; }
