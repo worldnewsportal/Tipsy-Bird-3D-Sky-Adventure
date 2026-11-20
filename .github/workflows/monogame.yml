@@ -20,8 +20,11 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
-      - name: Install Android workload
-        run: dotnet workload install android --skip-sign-check
+      - name: Install Android workload (pinned SDK via global.json)
+        run: |
+          dotnet --list-sdks
+          dotnet workload install android --skip-sign-check
+          dotnet workload list
 
       - name: Publish APK (android-arm64)
         run: |
