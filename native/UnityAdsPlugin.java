@@ -204,6 +204,7 @@ public class UnityAdsPlugin extends Plugin {
     public void showBanner(PluginCall call) {
         final String pl = call.getString("placement", "Banner_Android");
         if (bridge == null || bridge.getActivity() == null) { call.resolve(); return; }
+        if (!UnityAds.isInitialized()) { call.resolve(); return; }
         bannerTries = 0;
         call.setKeepAlive(true);
         ui(new Runnable() {
