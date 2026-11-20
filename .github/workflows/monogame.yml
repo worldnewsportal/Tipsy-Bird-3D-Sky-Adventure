@@ -1,0 +1,81 @@
+name: Tipsy Bird Mono (MonoGame 2D native)
+
+on:
+  push:
+    branches: [ vibe/raylib-ultra-c73d38 ]
+    paths: [ 'mono/**', '.github/workflows/monogame.yml', 'docs/MONO.md' ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Install Android workload
+        run: dotnet workload install android --skip-sign-check
+
+      - name: Publish APK (android-arm64)
+        run: |
+          dotnet publish mono/TipsyBird.csproj -c Release -f net8.0-android \
+            -p:AndroidPackageFormat=apk \
+            -p:RuntimeIdentifiers=android-arm64 \
+            -p:AndroidVersionCode=${{ github.run_number }} \
+            -o out
+          APK=$(find out -name '*-Signed.apk' | head -1)
+          [ -n "$APK" ] || APK=$(find out -name '*.apk' | head -1)
+          echo "APK=$APK" >> "$GITHUB_ENV"
+          ls -la out
+
+      - name: Sign with release.p12
+        run: |
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          cp tools/release.p12 /tmp/ks.p12
+          KS_PASS=tipsybird2026 "$BT/apksigner" sign \
+            --ks /tmp/ks.p12 --ks-key-alias tipsy --ks-pass env:KS_PASS \
+            --out TipsyBirdMono.apk "$APK"
+          "$BT/apksigner" verify --print-certs TipsyBirdMono.apk
+          unzip -l TipsyBirdMono.apk | grep -E 'classes.*\.dex'
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: TipsyBirdMono-apk
+          path: TipsyBirdMono.apk
+
+      - name: Notes (Arabic)
+        if: github.ref == 'refs/heads/vibe/raylib-ultra-c73d38'
+        run: |
+          cat > notes.md <<'__NOTES__'
+          # Tipsy Bird Mono — Build #${{ github.run_number }}
+
+          نسخة **2D native كاملة بلغة C# / MonoGame** — مطابقة للأصلية (فرع fully-offline) بالبيانات بالضبط:
+
+          - **8 مواطل** بألوانها وضبابها وأطوار سمائها الثلاثة (من الأصلية 100%)
+          - **35 سكنًا** بأسعارها وبوابات ماباتها كما هي
+          - عملات + مفاتيح + **صندوق يومي** (streak) + **5 مهام متجددة** + إحياء بـ 25 عملة
+          - خط عربي Amiri مضمّن (أطلس 1024×211، نص مُشكَّل جاهز)
+          - موسيقى chiptune مولّدة في الذاكرة (3 قوالب) + 8 مؤثرات صوتية
+          - ثابت 60 FPS، تحكم سحب/نقر، إعدادات كاملة
+
+          حمّل الأداة `TipsyBirdMono.apk` من قسم Assets أسفلًا.
+          __NOTES__
+
+      - uses: softprops/action-gh-release@v2
+        if: github.ref == 'refs/heads/vibe/raylib-ultra-c73d38'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: mono-${{ github.run_number }}
+          name: Tipsy Bird Mono — Build #${{ github.run_number }}
+          body_path: notes.md
+          files: TipsyBirdMono.apk
+          fail_on_unmatched_files: true
+          make_latest: false

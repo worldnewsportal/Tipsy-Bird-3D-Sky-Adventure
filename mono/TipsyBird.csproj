@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0-android</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>TipsyBird.Mono</RootNamespace>
+    <AssemblyName>TipsyBirdMono</AssemblyName>
+    <MonoGamePlatform>Android</MonoGamePlatform>
+    <ApplicationId>com.tipsybird.mono2d</ApplicationId>
+    <ApplicationVersion Condition="'$(ApplicationVersion)'==''">1</ApplicationVersion>
+    <ApplicationDisplayVersion>2.0</ApplicationDisplayVersion>
+    <AndroidApplication>true</AndroidApplication>
+    <AndroidPackageFormat>apk</AndroidPackageFormat>
+    <SupportedOSPlatformVersion>24</SupportedOSPlatformVersion>
+    <RuntimeIdentifiers>android-arm64</RuntimeIdentifiers>
+    <Nullable>disable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>disable</ImplicitUsings>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="MonoGame.Framework.Android" Version="3.8.2.1105" />
+    <EmbeddedResource Include="Resources/font_atlas.png" />
+  </ItemGroup>
+</Project>
