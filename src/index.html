@@ -406,7 +406,7 @@ function armBoost(){const a=St.d.arm;const Pm=St.d.perm;if(Pm.coin)addCoins(5);
 function dailyCheck(){const d=today(),r=St.d.dr||{last:'',streak:0};if(r.last===d)return;const y=new Date(Date.now()-864e5).toLocaleDateString('en-CA'),st=r.last===y?r.streak+1:1;
  dpend={d,st,amt:10+Math.min(st,7)*5};$('#drTxt').textContent=T('اليوم')+' '+st;$('#drAmt').textContent='+'+dpend.amt+' 🪙';$('#s-daily').classList.add('on')}
 function revive(free){if(revived||state!==S.OVER)return;if(!free){if(St.d.coins<REV)return;St.d.coins-=REV;St.save()}revived=true;B.dead=false;B.rot=0;overT=0;shown=false;B.o1=0;
- const p=pipes.filter(q=>q.x>BX-1.2).sort((a,b)=>a.x-b.x)[0];B.y=p?p.gy:2;B.vy=FLAP*.6;invul=2.5;hold=.7;shield=false;bub.visible=false;setState(S.PLAYING);flash();Au.win();sync()}
+ const p=pipes.filter(q=>q.x>BX-1.2).sort((a,b)=>a.x-b.x)[0];B.y=p?p.gy:2;B.vy=FLAP*.6;invul=3;hold=.7;shield=false;bub.visible=false;setState(S.PLAYING);flash();Au.win();sync();say(L==='en'?'Back where you fell — protected 3s':'عُدت من مكان موتك — حماية 3 ثوان')}
 /* ---------- pipes (pooled) ---------- */
 const coinG=new THREE.CylinderGeometry(.38,.38,.1,20).rotateX(Math.PI/2),coinM=new THREE.MeshLambertMaterial({color:0xffd23f,emissive:0x8a6a00}),shG=new THREE.IcosahedronGeometry(.4,1),shM=new THREE.MeshLambertMaterial({color:0x4fc3ff,emissive:0x1a6a9a}),mgM=new THREE.MeshLambertMaterial({color:0xff5470,emissive:0x8a1a30}),slM=new THREE.MeshLambertMaterial({color:0xb28cff,emissive:0x4a2a8a}),cyl=new THREE.CylinderGeometry(1,1,1,20,1),pM=Lm(0x57c93a),cM=Lm(0x45b02c),rM=Lm(0xffe14d),pipes=[];
 const PM=[shM,mgM,slM];
@@ -580,10 +580,10 @@ const UA={P:null,ok:false,okIn:false,okBn:false,online:true,ready:false,nt:0,
   else if(this.P)this.ready=false;
   umbn();adStatus()}catch(e){this.ok=false}},
  show(pl,cb){if(!this.ok||!this.ready||!this.isOn()){cb(false);return}
-  let done=false;const fin=r=>{if(done)return;done=true;if(r&&r.rewarded)setTimeout(()=>this.preload(),1500);cb(!!(r&&r.rewarded),r)};const tm=setTimeout(()=>fin({failed:true}),20000);
+  let done=false;const fin=r=>{if(done)return;done=true;if(r&&r.rewarded)setTimeout(()=>this.preload(),1500);cb(!!(r&&r.rewarded),r)};const tm=setTimeout(()=>fin({failed:true}),90000);
   Promise.resolve(this.P.showRewarded({placement:pl})).then(r=>{clearTimeout(tm);fin(r)}).catch(()=>{clearTimeout(tm);fin({failed:true})})},
  showIn(pl,cb){if(!this.okIn||!this.ready||!this.isOn()){cb(false);return}
-  let done=false;const fin=r=>{if(done)return;done=true;if(r&&r.shown)setTimeout(()=>this.preload(),1500);cb(!!(r&&r.shown),r)};const tm=setTimeout(()=>fin({failed:true}),15000);
+  let done=false;const fin=r=>{if(done)return;done=true;if(r&&r.shown)setTimeout(()=>this.preload(),1500);cb(!!(r&&r.shown),r)};const tm=setTimeout(()=>fin({failed:true}),60000);
   Promise.resolve(this.P.showInterstitial({placement:pl})).then(r=>{clearTimeout(tm);fin(r)}).catch(()=>{clearTimeout(tm);fin({failed:true})})}};
 let bnOn=false;
 function umbn(){const want=UA.ready&&UA.okBn&&St&&St.d&&St.d.ads!==false&&state===S.MENU&&UA.isOn();
