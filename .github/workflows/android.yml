@@ -55,7 +55,7 @@ jobs:
           sed -i 's/<activity/<activity android:screenOrientation="portrait"/' $M
           sed -i 's#</manifest>#    <uses-permission android:name="android.permission.VIBRATE" />\n</manifest>#' $M
           sed -i '/name="AppTheme.NoActionBar"/a\        <item name="android:windowFullscreen">true</item>' $RES/values/styles.xml
-          cp -r icons/. $RES/
+          for d in icons/mipmap-*/; do cp -r "$d" "$RES/"; done
           echo '<?xml version="1.0" encoding="utf-8"?><resources><color name="ic_launcher_background">#6FD3FF</color></resources>' > $RES/values/ic_launcher_background.xml
           find $RES -name 'splash.png' -exec cp icons/splash.png {} \;
           rm -f $RES/splash.png
