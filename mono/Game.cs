@@ -52,7 +52,7 @@ namespace TipsyBird.Mono
         int runCoins;
 
         List<Obs> obs = new List<Obs>(); List<Coin> coinsA = new List<Coin>(); List<Power> pws = new List<Power>(); List<Part> parts = new List<Part>();
-        float birdY = 0, birdV = 0, flapT = 0, worldX = 0, spawnX = 0;
+        float birdY = 0, birdV = 0, flapT = 0, worldX = 0, spawnX = 0, birdTilt = 0;
         bool alive = false, pendingRevive = false; int score = 0; float shakeAmp = 0; float deadT = 0;
 
         float offFar, offMid, offGround, offCloud;
@@ -465,23 +465,26 @@ namespace TipsyBird.Mono
 
             float bx = birdXs();
             bool dead = false;
-            foreach (var o in obs)
+            for (int oi = 0; oi < obs.Count; oi++)
             {
-                if (o.x < bx - 400) continue;
+                var o = obs[oi];
+                if (o.x < bx - 400) { obs[oi] = o; continue; }
                 if (!o.passed && o.x < bx - o.w / 2)
                 {
                     o.passed = true; score++;
                     if ((S.runs + score) % 11 == 0) { S.keys++; toast(G("throne"), 2f); }
                 }
                 if (hitObs(o, bx, birdY, 24)) dead = true;
+                obs[oi] = o;
             }
             float birdR = 26;
             if (birdY + birdR > GROUND) { birdY = GROUND - birdR; dead = true; }
             if (birdY - birdR < CEIL) { birdY = CEIL + birdR; dead = true; }
 
             updateCoins(dt, bx);
-            foreach (var p in pws)
+            for (int pi = 0; pi < pws.Count; pi++)
             {
+                var p = pws[pi];
                 if (p.dead) continue;
                 if (new Vector2(bx - p.x, birdY - p.y).Length() < 38)
                 {
@@ -492,6 +495,7 @@ namespace TipsyBird.Mono
                     else { x2T = 8; toast("X2", 2f); }
                     emit(p.x, p.y, 12, C(0x8ff2e0), 4);
                 }
+                pws[pi] = p;
             }
 
             if (dead) die();
@@ -508,8 +512,9 @@ namespace TipsyBird.Mono
 
         void updateCoins(float dt, float bx)
         {
-            foreach (var c in coinsA)
+            for (int ci = 0; ci < coinsA.Count; ci++)
             {
+                var c = coinsA[ci];
                 if (c.dead) continue;
                 var v = new Vector2(bx - c.x, birdY - c.y);
                 float d = v.Length();
@@ -523,6 +528,7 @@ namespace TipsyBird.Mono
                     sfxCoin?.Play();
                     emit(c.x, c.y, 5, C(0xffd23f), 3);
                 }
+                coinsA[ci] = c;
             }
         }
 
@@ -576,6 +582,7 @@ namespace TipsyBird.Mono
             sb.Draw(white, new Vector2(x, y), null, c, ang, new Vector2(0.5f, 0.5f), new Vector2(w, h), SpriteEffects.None, 0);
         }
         Color Faded(Color c, float a) { int al = (int)Math.Clamp(255 * a, 0, 255); return new Color(c.R, c.G, c.B, al); }
+        string N(int v) { return v.ToString("#,0"); }
         Color LerpC(Color a, Color b, float t) { return new Color((int)(a.R + (b.R - a.R) * t), (int)(a.G + (b.G - a.G) * t), (int)(a.B + (b.B - a.B) * t), (int)(a.A + (b.A - a.A) * t)); }
 
         // ---------- text via glyph atlas (shaped Arabic already baked) ----------
@@ -788,7 +795,7 @@ namespace TipsyBird.Mono
                 float sx = p.x - worldX;
                 if (sx < -60 || sx > W + 60) continue;
                 float floaty = (float)Math.Sin(worldX * 0.06f + p.x) * 6;
-                uint col = p.kind == 0 ? 0x88d8ff : (p.kind == 1 ? 0xff8fd8 : (p.kind == 2 ? 0x9affc0 : 0xffe12a));
+                uint col = p.kind == 0 ? 0x88d8ffu : (p.kind == 1 ? 0xff8fd8u : (p.kind == 2 ? 0x9affc0u : 0xffe12au));
                 Circ(sx, p.y + floaty, 20, C(0x2a1f46, 230));
                 Circ(sx, p.y + floaty, 18, C(col));
                 if (p.kind == 0) { Circ(sx, p.y + floaty, 8, C(0xffffff, 80)); DrawRing(sx, p.y + floaty, 10, 3, C(0xffffff)); }
@@ -849,7 +856,7 @@ namespace TipsyBird.Mono
         {
             btns.Add(new Btn(id, (int)x, (int)y, (int)w, (int)h));
         }
-        void Dim(float a) { R(0, 0, W, H, new Color(12, 8, 28, (byte)(255 * a))); }
+        void Dim(float a) { R(0, 0, W, H, new Color(12, 8, 28, (int)(255 * a))); }
 
         void uiBtn(int id, float x, float y, float w, float h, Color fill, Color edge, string label, float fs)
         {
@@ -1285,9 +1292,9 @@ namespace TipsyBird.Mono
             {
                 // continuous relative steering while dragging
                 float dx = (tPos.X - steerPrevX) / W * 900 * (S.sens / 100f);
-                foreach (var ob in obs) ob.x -= dx * dt;
-                foreach (var cA in coinsA) cA.x -= dx * dt;
-                foreach (var p2 in pws) p2.x -= dx * dt;
+                for (int i = 0; i < obs.Count; i++) { var ob = obs[i]; ob.x -= dx * dt; obs[i] = ob; }
+                for (int i = 0; i < coinsA.Count; i++) { var cA = coinsA[i]; cA.x -= dx * dt; coinsA[i] = cA; }
+                for (int i = 0; i < pws.Count; i++) { var p2 = pws[i]; p2.x -= dx * dt; pws[i] = p2; }
                 spawnX -= dx * dt;
                 steerPrevX = tPos.X;
             }
