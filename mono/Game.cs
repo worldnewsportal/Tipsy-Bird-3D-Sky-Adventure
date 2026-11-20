@@ -44,7 +44,7 @@ namespace TipsyBird.Mono
         Random rnd = new Random();
 
         SaveData S = new SaveData();
-        static MapDef MP; static int curMap = 0;
+        static Data.MapDef MP; static int curMap = 0;
         int mapSel = 0; int shopPage = 0; const int SHOP_PER = 8;
         bool wipeArmed = false;
 
@@ -622,7 +622,7 @@ namespace TipsyBird.Mono
             SkyMid = LerpC(C(a[1]), C(b[1]), f);
             SkyBot = LerpC(C(a[2]), C(b[2]), f);
         }
-        uint[] GetSky(MapDef m, int ph)
+        uint[] GetSky(Data.MapDef m, int ph)
         {
             switch (ph)
             {
@@ -1016,7 +1016,7 @@ namespace TipsyBird.Mono
             uiBtn(7, 100, H - 66, 110, 50, INK, INK, G("menu"), 22);
         }
 
-        void dBird(float x, float y, float r, SkinDef sk)
+        void dBird(float x, float y, float r, Data.SkinDef sk)
         {
             Circ(x, y, r, C(sk.b));
             Circ(x + 1, y + r * 0.25f, r * 0.6f, C(sk.l));
