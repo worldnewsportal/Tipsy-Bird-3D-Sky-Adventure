@@ -4,9 +4,10 @@
 
 | الحقل | الرابط |
 |---|---|
-| **سياسة الخصوصية** (Privacy policy URL) | https://worldnewsportal.github.io/Tipsy-Bird-3D-Sky-Adventure/#privacy |
-| **شروط الاستخدام** (Terms URL) | https://worldnewsportal.github.io/Tipsy-Bird-3D-Sky-Adventure/#terms |
-| **النسخة الإنجليزية** | https://worldnewsportal.github.io/Tipsy-Bird-3D-Sky-Adventure/#en-privacy |
+| **سياسة الخصوصية** (Privacy policy URL) | https://worldnewsportal.github.io/Tipsy-Bird-3D-Sky-Adventure/privacy.html |
+| **الموقع الرسمي** (Website URL) | https://worldnewsportal.github.io/Tipsy-Bird-3D-Sky-Adventure/ |
+| **شروط الاستخدام** (Terms URL) | https://worldnewsportal.github.io/Tipsy-Bird-3D-Sky-Adventure/terms.html |
+| **النسخة الإنجليزية** | https://worldnewsportal.github.io/Tipsy-Bird-3D-Sky-Adventure/privacy.html (القسم الإنجليزي أسفل الصفحة نفسها) |
 
 > ملاحظة: إذا ظهرت صفحة 404 = GitHub Pages غير مفعّل بعد — فعّله مرة واحدة (خطوة ٤ بالأسفل) وانتظر دقيقة.
 
