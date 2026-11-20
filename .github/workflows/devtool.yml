@@ -76,7 +76,7 @@ jobs:
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" TipsyBirdDevTools.apk --clobber
           else
-            gh release create "$TAG" TipsyBirdDevTools.apk --title "Tipsy DevTools — Build #${{ github.run_number }}" --notes "$NOTES"
+            gh release create "$TAG" TipsyBirdDevTools.apk --title "Tipsy DevTools — Build #${{ github.run_number }}" --notes "$NOTES" --latest=false
           fi
           echo "https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG/TipsyBirdDevTools.apk" >> "$GITHUB_STEP_SUMMARY"
 
