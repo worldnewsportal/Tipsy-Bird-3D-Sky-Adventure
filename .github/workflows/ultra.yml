@@ -28,7 +28,7 @@ jobs:
 
           git clone --depth 1 --branch 5.5 https://github.com/raysan5/raylib /tmp/raylib
           GLUE=$NDK/sources/android/native_app_glue
-          FLAGS="-O2 -DPLATFORM_ANDROID -DGRAPHICS_API_OPENGL_ES2 -I/tmp/raylib/src -I$GLUE"
+          FLAGS="-O2 -fPIC -DPLATFORM_ANDROID -DGRAPHICS_API_OPENGL_ES2 -I/tmp/raylib/src -I$GLUE"
 
           mkdir -p /tmp/obj
           for s in rcore rshapes rtextures rtext rmodels raudio utils; do
