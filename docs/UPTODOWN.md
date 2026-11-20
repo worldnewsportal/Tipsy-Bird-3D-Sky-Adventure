@@ -30,35 +30,37 @@ Tipsy Bird 3D Sky Adventure
 طائر ثلاثي الأبعاد في مغامرة جوية: مهام متجددة، عملات، متجر، وإعلانات اختيارية.
 ```
 
-### الوصف الكامل (عربي)
+### الوصف الكامل (عربي) — محدّث للمرحلة 29 (8 مابات + 35 سكن)
 ```
 🐦 Tipsy Bird 3D Sky Adventure — مغامرة سماء بثلاثة أبعاد كاملة!
 
-قُد طائرتك عبر عالم ثلاثي الأبعاد جميل: أنابيب متحركة، عملات ذهبية متوهجة، دروع ومغانط وكومبو، ثلاثة خرائط بأجواء متغيرة (نهار → غروب → ليل)، وتحديات تزداد صعوبة تدريجيًا.
+قُد طائرتك عبر 8 عوالم ثلاثية الأبعاد مختلفة جذريًا: 🌋 البركان (حمم وجمرات صاعدة) 🌊 المحيط (طفو وفقاعات) 🚀 الفضاء (نجوم وجاذبية خفيفة) 🌴 الأدغال (عملات وفيرة) ⛈️ العاصفة (رياح سريعة) — بالإضافة إلى 3 خرائط أساسية بأجواء متغيرة (نهار → غروب → ليل).
 
 ✨ المميزات:
-• جرافيكس 3D بثلاثة أطوار: بسيط / متوسط / خارق (تأثيرات سينمائية في الخارق)
-• اقتصاد كامل: عملات، 22 عنصر متجر (7 دائمة + 15 استهلاكي)، 10 جلدات قابلة للفتح
-• مهام متجددة بباقات: تبدأ بـ5 مهام ثم دفعات أقوى من 6–10 مهام — للأبد
+• 8 مابات بفيزياء وسماءات وديكورات فريدة — تُفتح بالتقدم + مفاتيح المابات 🔑
+• 35 سكنًا، من بينها 15 سكنًا خاصًا صعب الحصول عليه يعمل في أي ماب
+• جرافيكس 3D بثلاثة أطوار: بسيط / متوسط / خارق (تأثيرات سينمائية)
+• اقتصاد كامل: عملات، متجر كبير (قدرات دائمة + استهلاكيات)، مهام متجددة للأبد بباقات أقوى
 • 3 موسيقيات جميلة تتناوب تلقائيًا + مؤثرات صوتية حية
-• مكافآت إعلانية اختيارية تمامًا: عُد من مكان موتك أو خذ عملات إضافية
-• حفظ ذكي مزدوج: تقدمك يسترجع حتى بعد حذف اللعبة وإعادة تثبيتها
+• مكافآت إعلانية اختيارية تمامًا: عُد من مكان موتك أو خُذ عملات إضافية
+• حفظ ذكي مزدوج: تقدمك يُسترجع حتى بعد حذف اللعبة وإعادة تثبيتها
 • تعمل 100% بدون إنترنت — الإنترنت فقط للإعلانات الاختيارية
 • عربية وإنجليزية
 
 حمّلها الآن وحلّق! 🚀
 ```
 
-### Full description (English)
+### Full description (English) — updated for Stage 29 (8 maps + 35 skins)
 ```
 🐦 Tipsy Bird 3D Sky Adventure — a full 3D sky adventure!
 
-Fly your bird through a beautiful 3D world: moving pipes, glowing golden coins, shields, magnets and combos, 3 maps with changing skies (day → sunset → night) and progressively harder challenges.
+Fly your bird through 8 radically different 3D worlds: 🌋 Volcano (lava + rising embers) 🌊 Ocean (floaty physics + bubbles) 🚀 Space (stars + low gravity) 🌴 Jungle (coin-rich) ⛈️ Storm (fast winds) — plus 3 classic maps with changing skies (day → sunset → night).
 
 ✨ Features:
+• 8 maps with unique physics, skies and decor — unlocked by progress + map keys 🔑
+• 35 skins including 15 hard per-map collector skins usable on ANY map
 • 3D graphics with 3 quality tiers: Basic / Medium / Ultra (cinematic effects)
-• Full economy: coins, 22 shop items (7 permanent + 15 consumables), 10 unlockable skins
-• Endless cycling missions: start with 5, then tougher batches of 6–10, forever
+• Full economy: coins, big shop (permanent perks + consumables), endless missions in tougher batches
 • 3 beautiful alternating music tracks + live sound effects
 • Fully optional rewarded ads: continue from where you fell, or grab bonus coins
 • Dual smart save: your progress is restored even after uninstall + reinstall
@@ -76,16 +78,24 @@ Download now and flap away! 🚀
 ### الحقل الوحيد المطلوب منك
 - **بريد التواصل (Contact email)** — لا أستطيع معرفة بريدك؛ أنشئ بريدًا مخصصًا مثل `tipsybird.support@gmail.com` وأدخله في النموذج.
 
-## ٣) الصور (من هاتفك فقط)
+## ٣) الصور — 10 ملفات جاهزة في المستودع (icons/store/)
 
-1. شغّل اللعبة على هاتفك.
-2. التقط 3–4 صور (زر خفض الصوت + زر الطاقة في أغلب الهواتف):
-   - القائمة الرئيسية (الطائر ثلاثي الأبعاد ظاهر)
-   - وسط اللعب مع عملات ودرع
-   - شاشة المتجر
-   - شاشة المهام أو الإعدادات
-3. ارفعها في نموذج Uptodown.
-4. الأفضل: التقط بأطور «خارق» لتظهر قوة الجرافيكس.
+| الملف | الاستخدام في نموذج Uptodown |
+|---|---|
+| `icon-512.png` | أيقونة التطبيق (Square 512) |
+| `featured-1024x500.png` | الصورة المميزة Featured image |
+| `screenshots/shot-1-menu.png` | لقطة 1: القائمة الرئيسية |
+| `screenshots/shot-2-day.png` | لقطة 2: اللعب (نهار + عملات + درع) |
+| `screenshots/shot-3-volcano.png` | لقطة 3: ماب البركان + مفتاح 🔑 |
+| `screenshots/shot-4-space.png` | لقطة 4: ماب الفضاء |
+| `screenshots/shot-5-ocean.png` | لقطة 5: ماب المحيط + سمكة وفقاعات |
+| `screenshots/shot-6-shop.png` | لقطة 6: المتجر (35 سكن) |
+| `screenshots/shot-7-over.png` | لقطة 7: شاشة النهاية + الإحياء بالإعلان |
+| `screenshots/shot-8-missions.png` | لقطة 8: المهام المتجددة |
+
+- Uptodown يطلب **4 لقطات عمودية على الأقل** — لديك الآن 8 لقطات 1080×1920 + صورة مميزة.
+- اللقطات مولّدة بألوان وواجهة لعبتك الحقيقية. يمكنك أيضًا التصوير من هاتفك (زر الشاشة) وإضافته إضافة.
+- حمّلها من GitHub مباشرة: افتح الملف في المستودع ثم زر "Download raw file".
 
 ## ٤) تفعيل GitHub Pages (مرة واحدة — دقيقتان)
 
@@ -109,11 +119,11 @@ Download now and flap away! 🚀
 
 ## ٦) قبل الإرسال — قائمة تحقق
 
-- [ ] APK من آخر إصدار Releases (build-28 أو أحدث، موقّع release)
+- [ ] APK من آخر إصدار Releases (build-31 أو أحدث، موقّع release)
 - [ ] versionCode أعلى من أي إصدار سابق — CI يجعله متصاعدًا تلقائيًا (`run_number`)
 - [ ] سياسة الخصوصية تفتح وتعمل
 - [ ] بريد تواصل صالح
-- [ ] 3+ لقطات شاشة حقيقية
+- [ ] 8+ لقطات شاشة (جاهزة في icons/store/screenshots/)
 - [ ] الاسم والوصف لا يذكران "web" أو "HTML" أو أي كلمات تقنية — النصوص أعلاه نصّفها
 
 ## ٧) عند كل تحديث مستقبلي
