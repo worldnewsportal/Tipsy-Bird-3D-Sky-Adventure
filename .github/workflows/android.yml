@@ -52,7 +52,7 @@ jobs:
         run: |
           RES=android/app/src/main/res
           M=android/app/src/main/AndroidManifest.xml
-          sed -i 's/<activity/<activity android:screenOrientation="portrait"/' $M
+          sed -i 's/<activity/<activity android:screenOrientation="fullSensor"/' $M
           sed -i 's#</manifest>#    <uses-permission android:name="android.permission.VIBRATE" />\n</manifest>#' $M
           sed -i '/name="AppTheme.NoActionBar"/a\        <item name="android:windowFullscreen">true</item>' $RES/values/styles.xml
           for d in icons/mipmap-*/; do cp -r "$d" "$RES/"; done
