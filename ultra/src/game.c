@@ -145,10 +145,10 @@ static int todayInt(){
     time_t t=time(NULL); struct tm*tm=localtime(&t);
     return (tm->tm_year+1900)*10000+(tm->tm_mon+1)*100+tm->tm_mday;
 }
+static int days(int y,int m,int d){ y-=m<3; return (y*365+y/4-y/100+y/400)+(367*(m-3))/12+d; }
 static int dayDiff(int ymd1,int ymd2){ /* returns days between approx (for daily cooldown) */
     struct {int y,m,d;} a,b; a.d=ymd1%100; a.m=(ymd1/100)%100; a.y=ymd1/10000;
     b.d=ymd2%100; b.m=(ymd2/100)%100; b.y=ymd2/10000;
-    int days(int y,int m,int d){ y-=m<3; int e=(y*365+y/4-y/100+y/400); return e+(367*(m-3))/12+d; };
     return days(b.y,b.m,b.d)-days(a.y,a.m,a.d);
 }
 
