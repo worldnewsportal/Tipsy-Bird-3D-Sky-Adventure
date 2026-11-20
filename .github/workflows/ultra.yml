@@ -41,7 +41,7 @@ jobs:
           $CC $FLAGS -c ultra/src/game.c -o /tmp/obj/game.o
 
           $CC -shared -o /tmp/libmain.so /tmp/obj/*.o \
-              -lEGL -lGLESv2 -landroid -llog -lOpenSLES -lAAudio -lm -latomic -lc
+              -lEGL -lGLESv2 -landroid -llog -lOpenSLES -lm -latomic -lc
           file /tmp/libmain.so
           test -s /tmp/libmain.so
 
