@@ -1,141 +1,163 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Tipsy Bird 3D Sky Adventure — سياسة الخصوصية وشروط الاستخدام</title>
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font:16px/1.9 system-ui,'Segoe UI',Tahoma,sans-serif;background:#0e1a2b;color:#e8f1fb;padding:0 0 48px}
-header{background:linear-gradient(160deg,#1b3a5e,#2a629c);padding:36px 20px 30px;text-align:center;border-bottom:3px solid #ffd23f}
-header h1{font-size:26px;color:#fff;margin-bottom:6px}
-header p{color:#bcd6ff;font-size:14px}
-nav{max-width:760px;margin:18px auto 0;display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
-nav a{background:rgba(255,255,255,.08);color:#cfe4ff;text-decoration:none;padding:8px 16px;border-radius:20px;font-size:14px;border:1px solid rgba(140,190,255,.25)}
-main{max-width:760px;margin:0 auto;padding:24px 18px}
-section{background:#132438;border:1px solid #24425f;border-radius:14px;padding:22px 20px;margin-bottom:22px}
-h2{color:#ffd23f;font-size:20px;margin-bottom:14px}
-h3{color:#8fd0ff;font-size:16px;margin:18px 0 8px}
-p,li{color:#dbe9fa}
-ul{padding-inline-start:22px;margin:8px 0}
-li{margin-bottom:6px}
-a{color:#7fc4ff}
-.mt{margin-top:14px}
-.en{direction:ltr;text-align:left}
-footer{text-align:center;color:#7a95b5;font-size:13px;padding-top:8px}
+<meta name="description" content="الطائر الطايش 3D — مغامرة سماء ممتعة بثمانية عوالم و35 شخصية، تعمل دون إنترنت بالكامل. حمّلها الآن مجاناً.">
+<meta name="theme-color" content="#241a3a">
+<title>الطائر الطايش 3D — Tipsy Bird 3D Sky Adventure</title>
+<link rel="icon" href="assets/icon-512.png">
+<style>:root{--ink:#3a2a5c;--ink2:#241a3a;--cream:#fff6dc;--org:#ff7a2f;--orgd:#c4480f;--teal:#27c1b0;--aur:#ffd23f;--rose:#ff7eb6}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:'Segoe UI',Tahoma,Arial,sans-serif;background:var(--cream);color:var(--ink);line-height:1.8}
+a{color:var(--orgd)}
+nav{position:sticky;top:0;z-index:50;background:linear-gradient(90deg,var(--ink2),#3a2a6c);color:#fff;display:flex;align-items:center;gap:14px;padding:10px 5vw;box-shadow:0 3px 14px rgba(20,10,50,.35)}
+nav .logo{font-size:22px;font-weight:800}
+nav a{color:#f5e9c8;text-decoration:none;font-size:14.5px;opacity:.9}
+nav a:hover{color:var(--aur);opacity:1}
+nav .cta{margin-inline-start:auto;background:var(--org);color:#fff;padding:8px 18px;border-radius:99px;font-weight:700;box-shadow:0 3px 0 var(--orgd)}
+header{background:linear-gradient(160deg,#2c2050 0%,#443070 45%,#6a4a9c 80%,#ff9a8b 120%);color:#fff;text-align:center;padding:70px 5vw 60px;position:relative;overflow:hidden}
+header .bird{font-size:76px;display:inline-block;animation:bob 2.4s ease-in-out infinite;filter:drop-shadow(0 10px 18px rgba(0,0,0,.35))}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(-6deg)}50%{transform:translateY(-22px) rotate(8deg)}}
+header h1{font-size:clamp(30px,6vw,52px);margin:16px 0 8px;text-shadow:0 4px 14px rgba(0,0,0,.4)}
+header p{font-size:clamp(15px,3vw,20px);opacity:.92;max-width:640px;margin:0 auto 26px}
+.btn-dl{display:inline-block;background:linear-gradient(180deg,var(--org),var(--orgd));color:#fff;text-decoration:none;font-size:19px;font-weight:800;padding:16px 42px;border-radius:99px;box-shadow:0 6px 0 var(--orgd),0 12px 24px rgba(0,0,0,.3);transition:transform .15s}
+.btn-dl:hover{transform:translateY(-2px) scale(1.03)}
+.btn-ghost{display:inline-block;margin-top:14px;color:#ffdca8;font-size:15px}
+.stats{display:flex;flex-wrap:wrap;justify-content:center;gap:14px;margin-top:34px}
+.stats .st{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);backdrop-filter:blur(6px);border-radius:16px;padding:14px 26px;min-width:120px}
+.stats b{display:block;font-size:27px;color:var(--aur)}
+.stats span{font-size:13px;opacity:.85}
+section{padding:56px 5vw}
+section h2{font-size:clamp(24px,4vw,34px);text-align:center;margin-bottom:8px}
+section .sub{text-align:center;opacity:.65;margin-bottom:36px;font-size:15.5px}
+.shots{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px;max-width:1100px;margin:0 auto}
+.shots figure{border-radius:18px;overflow:hidden;box-shadow:0 8px 22px rgba(60,30,100,.18);transition:transform .2s;background:#fff}
+.shots figure:hover{transform:translateY(-5px) scale(1.02)}
+.shots img{width:100%;display:block;aspect-ratio:9/16;object-fit:cover;object-position:top}
+.shots figcaption{padding:9px 12px;font-size:13.5px;font-weight:600;text-align:center}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;max-width:1100px;margin:0 auto}
+.cards .c{background:#fff;border-radius:18px;padding:22px;box-shadow:0 6px 16px rgba(60,30,100,.1);border-top:5px solid var(--teal)}
+.cards .c:nth-child(4n+1){border-color:var(--org)}.cards .c:nth-child(4n+2){border-color:var(--teal)}
+.cards .c:nth-child(4n+3){border-color:var(--aur)}.cards .c:nth-child(4n+4){border-color:var(--rose)}
+.cards .c .ic{font-size:34px}
+.cards .c h3{font-size:17.5px;margin:8px 0 4px;color:var(--ink)}
+.cards .c p{font-size:13.8px;opacity:.75}
+.worlds{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;max-width:1100px;margin:0 auto}
+.worlds .w{border-radius:18px;padding:20px;color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.45);box-shadow:0 8px 20px rgba(0,0,0,.18);min-height:150px;display:flex;flex-direction:column;justify-content:flex-end;position:relative;overflow:hidden}
+.worlds .w .lock{position:absolute;top:12px;left:12px;background:rgba(0,0,0,.35);border-radius:99px;padding:3px 12px;font-size:12.5px}
+.worlds .w h3{font-size:19px}
+.worlds .w p{font-size:13px;opacity:.92}
+.faq{max-width:760px;margin:0 auto}
+.faq details{background:#fff;border-radius:14px;margin-bottom:12px;padding:16px 20px;box-shadow:0 4px 12px rgba(60,30,100,.09)}
+.faq summary{font-weight:700;font-size:15.5px;cursor:pointer;color:var(--orgd)}
+.faq p{font-size:13.8px;opacity:.85;margin-top:8px}
+#download{background:linear-gradient(160deg,#2c2050,#6a4a9c);color:#fff;text-align:center;border-radius:34px;max-width:1050px;margin:0 auto 60px;padding:48px 5vw}
+#download .btn-dl{margin-top:20px}
+footer{background:var(--ink2);color:#cfc3ee;text-align:center;padding:36px 5vw;font-size:13.5px}
+footer a{color:var(--aur);text-decoration:none;margin:0 10px}
+footer .links{margin-bottom:14px}
+@media(max-width:600px){nav a:not(.cta){display:none}.stats .st{min-width:104px;padding:10px 16px}}
 </style>
 </head>
 <body>
-<header>
-<h1>🐦 Tipsy Bird 3D Sky Adventure</h1>
-<p>سياسة الخصوصية وشروط الاستخدام / Privacy Policy &amp; Terms of Use</p>
+
 <nav>
-<a href="#privacy">سياسة الخصوصية</a>
-<a href="#terms">شروط الاستخدام</a>
-<a href="#en-privacy">Privacy (EN)</a>
-<a href="#en-terms">Terms (EN)</a>
+  <span class="logo">🐦 Tipsy Bird 3D</span>
+  <a href="#shots">لقطات</a>
+  <a href="#worlds">العوالم</a>
+  <a href="#faq">أسئلة</a>
+  <a class="cta" href="#download">حمّل الآن ⬇</a>
 </nav>
+
+<header id="top">
+  <span class="bird">🐦</span>
+  <h1>الطائر الطايش 3D — مغامرة سماء كاملة</h1>
+  <p>لعبة طيران ممتعة بأجواء كرتونية تُبهج، تعمل <b>دون إنترنت 100%</b>، بثمانية عوالم متشعّبة و35 شخصية ومهام متجدّدة ومكافآت يومية. حمّلها مجاناً وابدأ الرحلة.</p>
+  <a class="btn-dl" href="https://github.com/worldnewsportal/Tipsy-Bird-3D-Sky-Adventure/releases/download/build-38/TipsyBird3D.apk">⬇ تحميل APK — مجاني</a>
+  <br><a class="btn-ghost" href="https://github.com/worldnewsportal/Tipsy-Bird-3D-Sky-Adventure/releases">كل الإصدارات ↗</a>
+  <div class="stats">
+    <div class="st"><b>8</b><span>عوالم متنوّعة</span></div>
+    <div class="st"><b>35</b><span>شخصية قابلة للفتح</span></div>
+    <div class="st"><b>100%</b><span>بدون إنترنت</span></div>
+    <div class="st"><b>60</b><span>إطار في الثانية</span></div>
+    <div class="st"><b>20+</b><span>تعزيز ومكافأة</span></div>
+  </div>
 </header>
-<main>
 
-<section id="privacy">
-<h2>سياسة الخصوصية</h2>
-<p>آخر تحديث: نوفمبر 2025</p>
-<p class="mt">نحترم خصوصيتك. توضح هذه السياسة كيف يتعامل تطبيق «Tipsy Bird 3D Sky Adventure» (الحزمة: <b>com.tipsybird.game</b>) مع البيانات.</p>
-
-<h3>١) ما نجمعه — لاشيء تقريبًا</h3>
-<ul>
-<li><b>تقدمك في اللعبة</b> (النقاط، العملات، المهام، الجلدات، المشتريات، الإعدادات) يُحفَظ <b>محليًا على جهازك فقط</b>. لا يُرسَل إلى أي خوادم — لا نملك خوادم ولا حسابات ولا تسجيل دخول.</li>
-<li><b>لا نجمع</b> الاسم أو البريد أو رقم الهاتف أو الموقع — اللعبة تعمل بالكامل بدون حساب.</li>
-<li>نسخة احتياطية للتقدم يعالجها <b>نظام أندرويد/جوجل تلقائيًا</b> (النسخ الاحتياطي للجهاز) لاستعادة بياناتك بعد إعادة تثبيت التطبيق — تخضع لسياسات جهازك/حساب جوجل ولن يمكن للمطور الوصول إليها.</li>
-</ul>
-
-<h3>٢) الإعلانات (Unity Ads)</h3>
-<ul>
-<li>تتضمن اللعبة إعلانات من <b>Unity Ads</b> (Unity Technologies ApS) — إعلانات مكافآت <b>اختيارية بالكامل</b> (تشاهدها فقط إن أردت مكافأة)، ولا تظهر في وضع عدم الاتصال.</li>
-<li>شبكة الإعلانات قد تعالج معلومات مثل: معرّف الجهاز/الإعلاني، عنوان IP التقريبي، وبيانات استخدام التطبيق بهدف عرض الإعلانات وقياسها — وفق <a href="https://unity.com/legal/privacy-policy" rel="noopener">سياسة خصوصية Unity</a>.</li>
-<li>يمكنك تقليل الإعلانات المخصصة من إعدادات جهازك (الخصوصية → الإعلانات → حذف/تعطيل معرّف الإعلانات).</li>
-</ul>
-
-<h3>٣) الأذونات</h3>
-<ul>
-<li><b>INTERNET</b> و<b>ACCESS_NETWORK_STATE</b>: لتحميل الإعلانات فقط. بدون إنترنت تعمل اللعبة كاملة دون إعلانات.</li>
-<li><b>VIBRATE</b>: للاهتزاز أثناء اللعب (يمكن إيقافه من إعدادات اللعبة).</li>
-</ul>
-
-<h3>٤) الأطفال</h3>
-<p>اللعبة مناسبة لعامة الأشخاص، ولا تحتوي على شراء داخل التطبيق ولا دردشة ولا مشاركة محتوى بين اللاعبين.</p>
-
-<h3>٥) حذف البيانات</h3>
-<p>لحذف كل بياناتك: امسح بيانات التطبيق من إعدادات الجهاز أو احذف التطبيق — تُحذَف البيانات المحلية نهائيًا. لا نحتفظ بأي نسخة من بياناتك في أي مكان آخر.</p>
-
-<h3>٦) التواصل</h3>
-<p>لأي سؤال عن الخصوصية، تواصل عبر وسيلة التواصل المذكورة في صفحة الناشر على المتجر الذي حمّلت منه التطبيق.</p>
+<section id="shots">
+  <h2>🖼️ من داخل اللعبة</h2>
+  <p class="sub">لقطات حقيقية من القائمة حتى الحمم — كل عالم له سماء ورسوم خاصة به</p>
+  <div class="shots">
+    <figure><img loading="lazy" src="assets/shot-1-menu.png" alt="القائمة الرئيسية"><figcaption>القائمة الرئيسية</figcaption></figure>
+    <figure><img loading="lazy" src="assets/shot-2-day.png" alt="ماب المروج"><figcaption>عالم المروج</figcaption></figure>
+    <figure><img loading="lazy" src="assets/shot-3-volcano.png" alt="ماب البركان"><figcaption>عالم البركان 🔥</figcaption></figure>
+    <figure><img loading="lazy" src="assets/shot-4-space.png" alt="ماب الفضاء"><figcaption>عالم الفضاء 🌌</figcaption></figure>
+    <figure><img loading="lazy" src="assets/shot-5-ocean.png" alt="ماب المحيط"><figcaption>عالم المحيط 🌊</figcaption></figure>
+    <figure><img loading="lazy" src="assets/shot-6-shop.png" alt="المتجر"><figcaption>متجر الأزياء والأدوات</figcaption></figure>
+    <figure><img loading="lazy" src="assets/shot-7-over.png" alt="شاشة النهاية"><figcaption>شاشة النهاية + الميداليات</figcaption></figure>
+    <figure><img loading="lazy" src="assets/shot-8-missions.png" alt="المهام"><figcaption>المهام اليومية</figcaption></figure>
+  </div>
 </section>
 
-<section id="terms">
-<h2>شروط الاستخدام</h2>
-<p>آخر تحديث: نوفمبر 2025</p>
-
-<h3>١) الترخيص</h3>
-<p>يمنحك هذا التطبيق ترخيصًا شخصيًا وغير قابل للنقل لاستخدام اللعبة لأغراض ترفيهية. لا يجوز بيع أو توزيع أو إجراء هندسة عكسية لأي جزء من التطبيق.</p>
-
-<h3>٢) عدم الضمان</h3>
-<p>اللعبة تُقدَّم «كما هي» دون أي ضمانات. لا يتحمل المطور مسؤولية عن أي فقدان للبيانات أو ضرر ناتج عن الاستخدام.</p>
-
-<h3>٣) المحتوى الإعلاني</h3>
-<ul>
-<li>الإعلانات من مزوّدين خارجيين؛ لا نضمن محتواها، وعرضها لا يعني تأييد المطور لها.</li>
-<li>محاولات إساءة استخدام الإعلانات (نقر/إغلاق متكرر لمطاردة مكافآت) قد تنتهك شروط مزوّد الإعلانات.</li>
-</ul>
-
-<h3>٤) حقوق الملكية</h3>
-<p>جميع الرسوم والمؤثرات والشيفرة في هذا التطبيق مملوكة للمطور ولا يجوز إعادة استخدامها خارج التطبيق.</p>
-
-<h3>٥) التغييرات</h3>
-<p>قد نعدّل هذه الشروط أو ميزات اللعبة في أي تحديث. استمرارك في اللعب بعد التحديث يعني موافقتك على النسخة الجديدة.</p>
+<section style="background:#f4e8c8">
+  <h2>✨ لماذا الطائر الطايش؟</h2>
+  <p class="sub">كل ما تريده في لعبة طيران صغيرة في حجمها، ضخمة في محتواها</p>
+  <div class="cards">
+    <div class="c"><div class="ic">🌍</div><h3>8 عوالم كاملة</h3><p>من المروج الهادئة إلى العاصفة الجهنمية — لكل عالم سماء وخلفيات وشعور مختلف تماماً يُفتح بالنقاط والمفاتيح.</p></div>
+    <div class="c"><div class="ic">🐤</div><h3>35 شخصية</h3><p>من الكلاسيكي إلى الأسطورة: تنان، ساموراي، باندا، طاووس، عنقاء، ومجرة — كل شخصية بشكلها الخاص.</p></div>
+    <div class="c"><div class="ic">🎯</div><h3>مهام لا تنتهي</h3><p>5 مهام تتجدّد دائماً وبصعوبة متصاعدة — أكملها واحصل على عملات تنقلك مباشرة إلى المتجر.</p></div>
+    <div class="c"><div class="ic">🎁</div><h3>صندوق يومي</h3><p>مكافأة كل يوم مع سلسلة 7 أيام تكبر جوائزها، وإن نسيت يوماً فأنت تفقد سلسلتها فقط.</p></div>
+    <div class="c"><div class="ic">⚡</div><h3>20+ تعزيزاً</h3><p>درع، مغناطيس، تباطؤ الزمن، قوة رفرفة، إحياء… كل تعزيز يغيّر طريقة لعبك.</p></div>
+    <div class="c"><div class="ic">✈️</div><h3>إحياء بالإعلان</h3><p>مات؟ شاهد إعلاناً اختيارياً وتابع من حيث توقفت — إعلانات فقط عند طلبك، بلا بانرات مزعجة.</p></div>
+    <div class="c"><div class="ic">📴</div><h3>بدون إنترنت 100%</h3><p>اللعب والحفظ والأزياء والمهام تعمل كاملة دون أي شبكة — حمّلها وانسَ مشاكل الاتصال.</p></div>
+    <div class="c"><div class="ic">💾</div><h3>تقدّم محصّن</h3><p>نظام حفظ مزدوج (محلي + نسخة احتياطية) يحمي نقاطك وعملاتك حتى لو حذفت اللعبة.</p></div>
+  </div>
 </section>
 
-<section id="en-privacy" class="en">
-<h2>Privacy Policy (English)</h2>
-<p>Last updated: November 2025</p>
-<p class="mt">Tipsy Bird 3D Sky Adventure (package: <b>com.tipsybird.game</b>) is an offline-first game.</p>
-<h3>Data we collect</h3>
-<ul>
-<li>Your game progress (scores, coins, missions, skins, settings) is stored <b>locally on your device only</b>. We run no servers, accounts, or sign-in.</li>
-<li>Android/Google <b>device backup</b> may save your progress so it is restored after reinstall; this is handled by your device/Google account under their own policies. The developer cannot access it.</li>
-</ul>
-<h3>Advertising (Unity Ads)</h3>
-<ul>
-<li>Ads are served by <b>Unity Ads</b> (Unity Technologies ApS). Rewarded ads are fully optional and require internet.</li>
-<li>The ad network may process device identifiers, approximate IP address and app-usage data to deliver and measure ads, per <a href="https://unity.com/legal/privacy-policy" rel="noopener">Unity's Privacy Policy</a>.</li>
-<li>You can limit ad personalization in Android settings (Privacy → Ads → delete advertising ID).</li>
-</ul>
-<h3>Permissions</h3>
-<ul>
-<li><b>INTERNET</b>, <b>ACCESS_NETWORK_STATE</b>: only to load ads. The game works fully offline without them.</li>
-<li><b>VIBRATE</b>: gameplay feedback (can be disabled in-game).</li>
-</ul>
-<h3>Children</h3>
-<p>The game is suitable for a general audience, contains no in-app purchases, chat or user content sharing.</p>
-<h3>Deleting data</h3>
-<p>Clear the app's data or uninstall; all local data is removed. We keep no copies anywhere else.</p>
+<section id="worlds">
+  <h2>🗺️ عوالمك الثمانية</h2>
+  <p class="sub">افتحها بالنقاط والمفاتيح 🔑 التي تكسبها من المهام</p>
+  <div class="worlds">
+    <div class="w" style="background:linear-gradient(160deg,#8ee06a,#5fae3a)"><h3>المروج</h3><p>عالمك الأول — سماء نهارية صافية ومرج ناعم على الطراز الكلاسيكي.</p><span class="lock">✓ مفتوح</span></div>
+    <div class="w" style="background:linear-gradient(160deg,#e8c07a,#c98f47)"><h3>الصحراء</h3><p>رمال ذهبية وشمس حارقة — الصواب في الرفرفة يصعب كل ثانية.</p><span class="lock">✓ مفتوح</span></div>
+    <div class="w" style="background:linear-gradient(160deg,#e6f6ff,#8ec8e8)"><h3>القطب</h3><p>جليد ونور قطبي — اختبر دقة رفرفتك في الهواء البارد.</p><span class="lock">✓ مفتوح</span></div>
+    <div class="w" style="background:linear-gradient(160deg,#ff6b35,#a82408)"><h3>البركان</h3><p>سماء مشتعلة وأنهار حمم — أنقذ جناحيك من الجمر!</p><span class="lock">🔒 30🪙 + 3🔑</span></div>
+    <div class="w" style="background:linear-gradient(160deg,#1e6fd9,#124a8e)"><h3>المحيط</h3><p>أعماق زرقاء وفقاعات ومرجان — تحليق فوق الأمواج.</p><span class="lock">🔒 50🪙 + 5🔑</span></div>
+    <div class="w" style="background:linear-gradient(160deg,#2b2f77,#0b1030)"><h3>الفضاء</h3><p>نجوم ومجرّات بلا جاذبية — طيران مباشر إلى الكون.</p><span class="lock">🔒 75🪙 + 8🔑</span></div>
+    <div class="w" style="background:linear-gradient(160deg,#3aa04a,#0e5e24)"><h3>الأدغال</h3><p>أشجار كثيفة وضباب أخضر — عقبات مختبئة بين الأوراق.</p><span class="lock">🔒 100🪙 + 12🔑</span></div>
+    <div class="w" style="background:linear-gradient(160deg,#5c5f8a,#2a2d4a)"><h3>العاصفة</h3><p>برق وغيوم داكنة وريح تعاندك — الاختبار النهائي.</p><span class="lock">🔒 130🪙 + 18🔑</span></div>
+  </div>
 </section>
 
-<section id="en-terms" class="en">
-<h2>Terms of Use (English)</h2>
-<p>Last updated: November 2025</p>
-<ul>
-<li><b>License:</b> personal, non-transferable, for entertainment purposes only. No resale, redistribution or reverse engineering.</li>
-<li><b>No warranty:</b> provided "as is" without warranties of any kind. The developer is not liable for data loss or damages.</li>
-<li><b>Ads:</b> served by third parties; their content is not endorsed by the developer.</li>
-<li><b>Changes:</b> these terms may change with updates; continued use constitutes acceptance.</li>
-</ul>
+<section id="faq" style="background:#f4e8c8">
+  <h2>❓ أسئلة شائعة</h2>
+  <p class="sub">كل ما يسأل عنه اللاعبون</p>
+  <div class="faq">
+    <details open><summary>هل تحتاج اللعبة إنترنت للعب؟</summary><p>لا — اللعبة تعمل دون إنترنت 100%. الإعلانات الوحيدة في اللعبة (المكافآت الاختيارية) تحتاج اتصالاً فقط لعرضها، وكل شيء آخر يعمل بعد قطع الاتصال تماماً.</p></details>
+    <details><summary>هل العملات والمفاتيح تُشترى بمال حقيقي؟</summary><p>أبداً. كل العملات والمفاتيح والأزياء تُكسب باللعب والمهام والمكافآت اليومية فقط — لا يوجد أي شراء حقيقي داخل اللعبة.</p></details>
+    <details><summary>هل سيفقد تقدّمي إذا حذفت اللعبة؟</summary><p>عندنا نظام حفظ مزدوج: حفظ محلي + نسخة احتياطية في التطبيق نفسه. حتى بعد الحذف وإعادة التثبيت يحاول التطبيق استعادة نقاطك وعملاتك تلقائياً.</p></details>
+    <details><summary>كيف أتكيف مع الصعوبة؟</summary><p>عندك ثلاث درجات صعوبة (سهل / عادي / صعب) وثلاث أطوار جرافيكس لتحديد الأداء على جهازك، مع عدّاد FPS طوعي في الإعدادات.</p></details>
+    <details><summary>هل هي مناسبة للأطفال؟</summary><p>نعم — لا يوجد أي محتوى غير لائق ولا مشتريات داخلية. نوصي بأولياء الأمور بمراجعة <a href="privacy.html">سياسة الخصوصية</a> و<a href="terms.html">شروط الاستخدام</a>.</p></details>
+  </div>
+</section>
+
+<section id="download">
+  <h2>🚀 جاهز للطيران؟</h2>
+  <p style="opacity:.9;max-width:560px;margin:0 auto">حمّل اللعبة مباشرة من إصدارات GitHub — APK موقّع ورسمي بحجم 6.7 ميجابايت فقط، مع تحديثات تلقائية عبر موقعنا.</p>
+  <a class="btn-dl" href="https://github.com/worldnewsportal/Tipsy-Bird-3D-Sky-Adventure/releases/download/build-38/TipsyBird3D.apk">⬇ تحميل النسخة الأخيرة</a>
+  <br><a class="btn-ghost" href="https://github.com/worldnewsportal/Tipsy-Bird-3D-Sky-Adventure/releases">الإصدارات القديمة ↗</a>
+  <br><a class="btn-ghost" href="https://github.com/worldnewsportal/Tipsy-Bird-3D-Sky-Adventure">المشروع على GitHub ↗</a>
 </section>
 
 <footer>
-© 2025 Tipsy Bird 3D Sky Adventure · <a href="https://github.com/worldnewsportal/Tipsy-Bird-3D-Sky-Adventure">GitHub</a>
+  <div class="links">
+    <a href="terms.html">شروط الاستخدام</a> ·
+    <a href="privacy.html">سياسة الخصوصية</a> ·
+    <a href="https://github.com/worldnewsportal/Tipsy-Bird-3D-Sky-Adventure">سجل التطوير</a>
+  </div>
+  © 2026 الطائر الطايش 3D — Tipsy Bird 3D Sky Adventure. جميع الحقوق محفوظة لمطوّرها.
 </footer>
-</main>
 </body>
 </html>
