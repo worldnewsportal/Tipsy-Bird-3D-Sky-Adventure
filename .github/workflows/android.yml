@@ -3,6 +3,10 @@ name: Build Android APK
 on:
   push:
     branches: [main, master, vibe/fully-offline-c73d38]
+    paths-ignore:
+      - 'ultra/**'
+      - 'docs/ULTRA.md'
+      - '.github/workflows/ultra.yml'
   workflow_dispatch:
 
 concurrency:

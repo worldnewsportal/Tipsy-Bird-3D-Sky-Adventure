@@ -1,0 +1,104 @@
+name: Tipsy Bird Ultra (raylib)
+
+on:
+  push:
+    branches: ['**']
+    paths:
+      - 'ultra/**'
+      - '.github/workflows/ultra.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build native library (raylib 5.5 + game.c)
+        run: |
+          set -e
+          NDK=$(ls -d $ANDROID_HOME/ndk/* | sort -V | tail -1)
+          TC=$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin
+          CC=$TC/aarch64-linux-android24-clang
+          echo "Using NDK: $NDK"
+
+          git clone --depth 1 --branch 5.5 https://github.com/raysan5/raylib /tmp/raylib
+          GLUE=$NDK/sources/android/native_app_glue
+          FLAGS="-O2 -DPLATFORM_ANDROID -DGRAPHICS_API_OPENGL_ES2 -I/tmp/raylib/src -I/tmp/raylib/src/external -I$GLUE"
+
+          mkdir -p /tmp/obj
+          for s in rcore rshapes rtextures rtext rmodels raudio utils; do
+            echo ">> raylib: $s.c"
+            $CC $FLAGS -c /tmp/raylib/src/$s.c -o /tmp/obj/$s.o
+          done
+          echo ">> native_app_glue"
+          $CC $FLAGS -c $GLUE/android_native_app_glue.c -o /tmp/obj/glue.o
+          echo ">> game.c"
+          $CC $FLAGS -c ultra/src/game.c -o /tmp/obj/game.o
+
+          $CC -shared -o /tmp/libmain.so /tmp/obj/*.o \
+              -lEGL -lGLESv2 -landroid -llog -lOpenSLES -lAAudio -lm -latomic -lc
+          file /tmp/libmain.so
+          test -s /tmp/libmain.so
+
+      - name: Package APK (aapt2, no gradle)
+        run: |
+          set -e
+          BT=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -1)
+          PLAT=$(ls -d $ANDROID_HOME/platforms/* | sort -V | tail -1)
+
+          $BT/aapt2 compile --dir ultra/res -o /tmp/res.zip
+          $BT/aapt2 link -o /tmp/base.apk -I "$PLAT/android.jar" \
+            --manifest ultra/AndroidManifest.xml /tmp/res.zip \
+            --min-sdk-version 24 --target-sdk-version 34 \
+            --version-code ${{ github.run_number }} \
+            --version-name 1.0.${{ github.run_number }}
+
+          mkdir -p /tmp/lib/arm64-v8a
+          cp /tmp/libmain.so /tmp/lib/arm64-v8a/
+          (cd /tmp && zip -q base.apk lib/arm64-v8a/libmain.so)
+          unzip -l /tmp/base.apk | grep -q "lib/arm64-v8a/libmain.so"
+
+          $BT/zipalign -p -f 4 /tmp/base.apk /tmp/aligned.apk
+          cp tools/release.p12 /tmp/release.jks
+          $BT/apksigner sign \
+            --ks /tmp/release.jks --ks-key-alias tipsy --ks-pass env:KS_PASS \
+            --out TipsyBirdUltra.apk /tmp/aligned.apk
+          $BT/apksigner verify TipsyBirdUltra.apk && echo "APK SIGNED OK"
+        env:
+          KS_PASS: tipsybird2026
+
+      - name: Release (ultra-N, never Latest)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cat > /tmp/notes.md <<'__NOTE__'
+          ## Tipsy Bird Ultra (raylib rebuild) — build #${{ github.run_number }}
+
+          نسخة تجريبية جديدة من الصفر بمحرك raylib 5.5 native (بدون WebView):
+          - 4 عوالم (مرج / غروب / ليل نيون / بركان) بانتقالات سلسة
+          - 4 أنواع عوائق: أعمدة، منزلقات، دوّارات، بوابة الحلقة (+3 بونص)
+          - قوى خاصة: درع / مغناطيس / إبطاء / نقاط مضاعفة
+          - مهام متجددة بمكافآت + متجر 8 سكنات + إحياء بالعملات
+          - موسيقى ومؤثرات مُولَّدة رقميًا داخل المحرك، حفظ تلقائي، جماليات نضج (hit-stop / slow-mo / اهتزاز)
+
+          ⚠️ هذه نسخة الفرع التجريبي — اللعبة الأصلية لا تتأثر إطلاقًا وتبقى build-N هي Latest.
+          __NOTE__
+          gh release create ultra-${{ github.run_number }} TipsyBirdUltra.apk \
+            --title "Tipsy Bird Ultra — ${{ github.run_number }}" \
+            --notes-file /tmp/notes.md --latest=false
+
+      - name: Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: TipsyBirdUltra-apk
+          path: TipsyBirdUltra.apk
+
+      - name: Verify
+        run: |
+          ls -la TipsyBirdUltra.apk
+          unzip -l TipsyBirdUltra.apk | grep -E "libmain.so|AndroidManifest|resources"
