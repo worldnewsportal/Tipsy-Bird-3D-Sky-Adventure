@@ -1,0 +1,7 @@
+node_modules/
+www/
+android/
+*.log
+.DS_Store
+-e 
+package-lock.json

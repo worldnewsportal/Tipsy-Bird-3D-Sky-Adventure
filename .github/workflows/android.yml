@@ -2,12 +2,18 @@ name: Build Android APK
 
 on:
   push:
-    branches: [main, master]
+    branches: [main, master, vibe/fully-offline-c73d38]
   workflow_dispatch:
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -23,28 +29,71 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Prepare web files (offline Three.js)
+      - name: Prepare web files (fully offline)
         run: |
           mkdir -p www
           cp src/index.html www/index.html
-          cp node_modules/three/build/three.min.js www/three.min.js
-          sed -i 's#https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js#three.min.js#' www/index.html
-          sed -i '/fonts.googleapis.com/d' www/index.html
-          grep -q 'src="three.min.js"' www/index.html
+          cp -r src/vendor www/vendor
+          cp -r src/music www/music
+          grep -q 'src="vendor/three.min.js"' www/index.html
+          if grep -qE '(src|href)="https?://|url\(https?://' www/index.html; then
+            echo 'External URL found in web files'; exit 1
+          fi
+          python3 tools/check_i18n.py www/index.html
+
+      - name: Inject free cloud sync config (GitHub Secrets preferred, tools/sync-cfg.json fallback)
+        env:
+          FB_API: ${{ secrets.FIREBASE_WEB_API_KEY }}
+          FB_URL: ${{ secrets.FIREBASE_DB_URL }}
+          BUILD_NO: ${{ github.run_number }}
+        run: |
+          python3 - <<'PYEOF'
+          import json, os
+          src = open('www/index.html', encoding='utf-8').read()
+          api = (os.environ.get('FB_API') or '').strip()
+          url = (os.environ.get('FB_URL') or '').strip().rstrip('/')
+          src_used = 'GitHub Secrets (key hidden from repo)'
+          if not api or not url:
+              cfg = {'api': '', 'url': ''}
+              if os.path.isfile('tools/sync-cfg.json'):
+                  try: cfg = json.load(open('tools/sync-cfg.json', encoding='utf-8'))
+                  except Exception as e:
+                      print('sync-cfg.json unreadable ({}): ignoring'.format(e)); cfg = {'api': '', 'url': ''}
+              api = api or (cfg.get('api') or '').strip()
+              url = url or (cfg.get('url') or '').strip().rstrip('/')
+              src_used = 'tools/sync-cfg.json (committed file)'
+          if api and url and '__' not in api and '__' not in url:
+              assert src.count("'__FB_API__'") == 1 and src.count("'__FB_URL__'") == 1, 'cloud placeholders missing'
+              src = src.replace("'__FB_API__'", "'" + api.replace("'", "") + "'").replace("'__FB_URL__'", "'" + url.replace("'", "") + "'")
+              open('www/index.html', 'w', encoding='utf-8').write(src)
+              print('cloud sync config: INJECTED from ' + src_used + ' (api=' + api[:6] + '...)')
+          else:
+              print('cloud sync config: DORMANT (no Secrets, tools/sync-cfg.json empty or absent) - game stays 100% local')
+          bno = (os.environ.get('BUILD_NO') or 'dev').strip()
+          if src.count("'__BUILD__'") == 1:
+              src = src.replace("'__BUILD__'", "'" + bno + "'", 1)
+              open('www/index.html', 'w', encoding='utf-8').write(src)
+              print('build number: INJECTED', bno)
+          else:
+              print('build number: LEAVING (count=%d)' % src.count("'__BUILD__'"))
+          PYEOF
 
       - name: Create Android project
         run: |
           npx cap add android
           npx cap sync android
 
+      - name: Inject native Unity Ads plugin
+        run: bash native/inject_native.sh
+
       - name: Customize Android project
         run: |
           RES=android/app/src/main/res
           M=android/app/src/main/AndroidManifest.xml
-          sed -i 's/<activity/<activity android:screenOrientation="portrait"/' $M
+          sed -i 's/<activity/<activity android:screenOrientation="fullSensor"/' $M
           sed -i 's#</manifest>#    <uses-permission android:name="android.permission.VIBRATE" />\n</manifest>#' $M
           sed -i '/name="AppTheme.NoActionBar"/a\        <item name="android:windowFullscreen">true</item>' $RES/values/styles.xml
-          cp -r icons/. $RES/
+          for d in icons/mipmap-*/; do cp -r "$d" "$RES/"; done
           echo '<?xml version="1.0" encoding="utf-8"?><resources><color name="ic_launcher_background">#6FD3FF</color></resources>' > $RES/values/ic_launcher_background.xml
           find $RES -name 'splash.png' -exec cp icons/splash.png {} \;
           rm -f $RES/splash.png
@@ -54,7 +103,14 @@ jobs:
         working-directory: android
         run: |
           chmod +x gradlew
-          ./gradlew assembleRelease --no-daemon
+          ok=0
+          for i in 1 2 3; do
+            if ./gradlew assembleRelease --no-daemon; then ok=1; break; fi
+            if [ $i -eq 3 ]; then break; fi
+            echo "Transient dependency failure (attempt $i) — retrying in 45s..."
+            sleep 45
+          done
+          [ $ok -eq 1 ] || exit 1
 
       - name: Sign APK
         env:
@@ -65,6 +121,10 @@ jobs:
           BT=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -1)
           if [ -n "$KEYSTORE_BASE64" ]; then
             echo "$KEYSTORE_BASE64" | base64 -d > release.jks
+          elif [ -f tools/release.p12 ]; then
+            echo "Using the committed signing key (tools/release.p12) — same signature on every build"
+            cp tools/release.p12 release.jks
+            KS_PASS=${KS_PASS:-tipsybird2026}; KEY_ALIAS=${KEY_ALIAS:-tipsy}
           else
             echo "No keystore secret found: creating a temporary one (add secrets to keep the same signature between builds)"
             KS_PASS=tipsybird123; KEY_ALIAS=tipsy
@@ -76,6 +136,31 @@ jobs:
           export KS_PASS
           $BT/apksigner sign --ks release.jks --ks-key-alias $KEY_ALIAS --ks-pass env:KS_PASS --out TipsyBird3D.apk aligned.apk
           $BT/apksigner verify TipsyBird3D.apk
+          CERT=$($BT/apksigner verify --print-certs TipsyBird3D.apk | grep 'SHA-1 digest' | head -1 | sed 's/.*digest: //')
+          {
+            echo "### 📋 SHA-1 توقيع اللعبة (ثابت — لربط Google Play Games)"
+            echo '```'
+            echo "$CERT"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Share APK (release + direct link)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="build-${{ github.run_number }}"
+          NOTES="APK جاهز بميزة الإعلانات (Unity Ads 4.22.0) — بناء #${{ github.run_number }} (${GITHUB_REF_NAME})"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" TipsyBird3D.apk --clobber
+            gh release edit "$TAG" --latest
+          else
+            gh release create "$TAG" TipsyBird3D.apk --title "Tipsy Bird 3D — Build #${{ github.run_number }}" --notes "$NOTES" --latest
+          fi
+          URL=$(gh release view "$TAG" --repo $GITHUB_REPOSITORY --json url -q .url)
+          echo "APK shared: $URL" >> "$GITHUB_STEP_SUMMARY"
+          echo "### رابط مشاركة الـ APK" >> "$GITHUB_STEP_SUMMARY"
+          echo "$URL" >> "$GITHUB_STEP_SUMMARY"
+          echo "رابط مباشر: https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG/TipsyBird3D.apk" >> "$GITHUB_STEP_SUMMARY"
 
       - uses: actions/upload-artifact@v4
         with:

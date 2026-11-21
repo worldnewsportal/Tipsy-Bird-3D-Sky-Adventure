@@ -1,0 +1,28 @@
+# Music License / ليسانس الموسيقى
+
+License: **CC0 1.0 Universal — Public Domain Dedication**
+https://creativecommons.org/publicdomain/zero/1.0/legalcode
+
+All 5 tracks come from the FreePD.com catalog (Kevin MacLeod's public-domain music project).
+FreePD.com states: "Free for Commercial Use — Free of Royalties — Free of Attribution — Creative Commons 0".
+The catalog is preserved on archive.org (item: freepd), which confirms each piece is
+"dedicated to the Public Domain".
+
+CC0 means: usable commercially, with NO attribution required, NO royalties, NO restrictions.
+Note below kept as good practice (provenance chain), not as a legal requirement.
+
+| File | Track | Creator | Source |
+|------|-------|---------|--------|
+| m1.mp3 | Funshine | FreePD catalog (Kevin MacLeod) | freepd.com / archive.org item freepd |
+| m2.mp3 | Happy Whistling Ukulele | FreePD catalog | freepd.com / archive.org item freepd |
+| m3.mp3 | Comic Game Loop - Mischief | FreePD catalog | freepd.com / archive.org item freepd |
+| m4.mp3 | Coy Koi | FreePD catalog | freepd.com / archive.org item freepd |
+| m5.mp3 | Going Bananas | FreePD catalog | freepd.com / archive.org item freepd |
+
+Edits: trimmed to ~78s, mono, 44.1kHz, 96kbps (ffmpeg) for APK size.
+
+# بالعربي
+
+كل المقطوعات الخمسة من مكتبة FreePD (مشروع الموسيقى العامة لـ Kevin MacLeod).
+الرخصة: CC0 «المجال العام» — أي استخدام تجاري، بلا ذكر إلزامي، بلا حقوق، آمنة 100%
+للنشر في Google Play و Uptodown وأي متجر. النبذة أعلاه توثيق اختياري للمصدر.
