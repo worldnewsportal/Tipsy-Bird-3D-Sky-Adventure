@@ -901,7 +901,7 @@ bind('#bBkOk',()=>{Au.init();Au.click();const v=($('#bkTa').value||'').trim();
  try{const j=JSON.parse(decodeURIComponent(escape(atob(v.slice(6)))));
   if(!j||typeof j!=='object'||!Array.isArray(j.bests)||!Array.isArray(j.own)){bad();return}
   localStorage.setItem('tipsy3d',JSON.stringify(j));toast(T('تم الاستيراد!'));setTimeout(()=>location.reload(),600)}catch(e){bad()}});
-bind('#bBkPaste',()=>{Au.init();Au.click();const ta=$('#bkTa');const manual=()=>toast(L==='en'?'Long-press the box then tap Paste':'قالّب‎ الأسدلم مطولًا ثم لاصق');try{if(navigator.clipboard&&navigator.clipboard.readText){navigator.clipboard.readText().then(v=>{if(v){ta.value=v.trim();try{ta.focus()}catch(e2){}}else manual()}).catch(manual)}else manual()}catch(e){manual()}});
+bind('#bBkPaste',()=>{Au.init();Au.click();const ta=$('#bkTa');const manual=()=>toast(L==='en'?'Long-press the box then tap Paste':'اضغط مطولًا على الحقل ثم اختر لصقًا');try{if(navigator.clipboard&&navigator.clipboard.readText){navigator.clipboard.readText().then(v=>{if(v){ta.value=v.trim();try{ta.focus()}catch(e2){}}else manual()}).catch(manual)}else manual()}catch(e){manual()}});
 
 bind('#bLang',()=>{L=L==='en'?'ar':'en';St.d.lang=L;St.save();applyLang()});
 bind('#bShop',()=>{shopOn=true;renderShop();ui()});
