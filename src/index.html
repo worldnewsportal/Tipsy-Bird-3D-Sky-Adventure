@@ -856,11 +856,14 @@ const UA={P:null,ok:false,okIn:false,okBn:false,online:true,ready:false,nt:0,dia
  showIn(pl,cb){if(!this.okIn||!this.ready||!this.isOn()){cb(false);return}
   let done=false;const fin=r=>{if(done)return;done=true;if(r&&r.shown)setTimeout(()=>this.preload(),1500);cb(!!(r&&r.shown),r)};const tm=setTimeout(()=>fin({failed:true}),60000);
   Promise.resolve(this.P.showInterstitial({placement:pl})).then(r=>{clearTimeout(tm);fin(r)}).catch(()=>{clearTimeout(tm);fin({failed:true})})}};
-let bnOn=false;
-function umbn(){const want=UA.ready&&UA.okBn&&St&&St.d&&St.d.ads!==false&&UA.isOn();
+/* Banner: always-on (top priority). Requested as soon as the native plugin
+   exists — independent of the ads-settings toggle and of network/ready state.
+   The native side queues pre-init requests and retries failed loads forever,
+   so nothing can permanently kill the banner. The reserved bottom strip
+   (html.bn → --bb:54px) stays as long as the banner engine is alive. */
+function umbn(){const want=!!(UA.P&&UA.okBn);
  try{document.documentElement.classList.toggle('bn',want)}catch(e){}
- if(want&&!bnOn){bnOn=true;try{UA.P.showBanner({placement:BN_PLACE,position:'bottom'})}catch(e){}}
- else if(!want&&bnOn){bnOn=false;try{UA.P.hideBanner()}catch(e){}}}
+ if(want){try{UA.P.showBanner({placement:BN_PLACE,position:'bottom'})}catch(e){}}}
 UA.init();
 function adStatus(){const el=$('#adSt');if(!el)return;const on=UA.isOn();
  el.textContent=St.d.ads===false?(L==='en'?'Off (settings)':'معطّلة (الإعدادات)'):!UA.ok?(L==='en'?'Not linked — update app':'غير مرتبطة — حدِّث التطبيق'):!on?(L==='en'?'Offline — need internet':'غير متصل — الإعلانات بالإنترنت'):(UA.ready||!UA.P?T('مفعّلة ✓'):(L==='en'?'Connected ✓':'متصل — جاهزة ✓'));
@@ -878,7 +881,7 @@ function crashOverlay(txt){if(document.getElementById('crashTop'))return;const d
  d.textContent=txt;d.onclick=()=>d.remove();(document.getElementById('ui')||document.body).appendChild(d)}
 window.addEventListener('crashinfo',crashBoxShow);
 function netRetry(){if(!UA.P||UA.P&&!UA.ready&&UA.isOn()){UA.init();return}UA.online=UA.isOn();UA.preload();umbn();adStatus();maybeAdGift();maybeAdCoins()}
-window.addEventListener('adstat',e=>{try{const d=JSON.parse(e.data||'{}');if(d.k){UA.diag[d.k]=String(d.v).slice(0,120);adStatus();if(d.k==='Banner'&&String(d.v).indexOf('try 3/3')>=0)setTimeout(()=>{bnOn=false;umbn()},9000)}}catch(_){}});
+window.addEventListener('adstat',e=>{try{const d=JSON.parse(e.data||'{}');if(d.k){UA.diag[d.k]=String(d.v).slice(0,120);adStatus();if(d.k==='Banner'&&String(d.v).indexOf('ready')<0)setTimeout(()=>umbn(),2000)}}catch(_){}});
 window.addEventListener('online',()=>{UA.online=true;setTimeout(netRetry,1500)});
 window.addEventListener('offline',()=>{UA.online=false;umbn();adStatus();maybeAdGift();maybeAdCoins()});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout(netRetry,900)});
