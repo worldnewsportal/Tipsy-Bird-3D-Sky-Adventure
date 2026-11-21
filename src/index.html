@@ -242,15 +242,13 @@ function applyLang(){const h=document.documentElement;h.lang=L;h.dir=L==='ar'?'r
  const w=document.createTreeWalker($('#ui'),NodeFilter.SHOW_TEXT);let n;while(n=w.nextNode()){if(n._o==null)n._o=n.nodeValue;const m=n._o.match(/^(\s*)([\s\S]*?)(\s*)$/);if(m[2]&&EN[m[2]]!==undefined)n.nodeValue=m[1]+(L==='en'?EN[m[2]]:m[2])+m[3]}
  $('#bLang').innerHTML=IC('globe')+(L==='en'?'العربية':'English');lvlTxt();adStatus();mapsBtn();renderMaps()}
 /* ---------- audio (procedural) ---------- */
-const TRACKS=[
-{spd:.19,mel:[12,16,19,16,14,12,14,16,19,21,19,16,14,12,9,12,7,12,16,19,16,14,12,14,16,19,24,21,19,16,14,12],bas:[0,7,0,7,9,16,9,16,0,7,0,7,7,14,7,14],ch:[0,9,0,7,0,9,0,7]},
-{spd:.15,mel:[9,12,16,19,21,19,16,12,14,17,21,24,21,17,14,12,9,12,16,19,16,12,9,7,12,16,19,24,23,19,16,12],bas:[9,16,9,16,2,9,2,9,9,16,9,16,7,14,7,14],ch:[9,2,9,7,9,2,9,7]},
-{spd:.23,mel:[4,7,11,14,12,11,7,4,2,7,11,16,14,12,11,7,0,4,7,11,12,16,19,16,14,12,11,7,4,2,0,-5],bas:[4,11,4,11,7,14,7,14,0,7,0,7,7,14,7,14],ch:[4,7,0,7,4,7,0,7]}],MST=32;
+
 const Au={c:null,tm:null,nx:0,st:0,
- init(){if(this.c){if(this.c.state==='suspended')this.c.resume();return}
+ init(){if(this.c){if(this.c.state==='suspended')this.c.resume();this.music(St.d.music&&!document.hidden);return}
+
   const A=window.AudioContext||window.webkitAudioContext;if(!A)return;this.c=new A();
   this.sg=this.c.createGain();this.mg=this.c.createGain();this.sg.connect(this.c.destination);this.mg.connect(this.c.destination);this.vol();syncMusic()},
- vol(){if(!this.c)return;this.sg.gain.value=St.d.sfx?.5*St.d.sv:0;this.mg.gain.value=St.d.music?.13*St.d.mv:0},
+ vol(){if(!this.c)return;this.sg.gain.value=St.d.sfx?.5*St.d.sv:0;this.mg.gain.value=St.d.music?.13*St.d.mv:0;if(this.tracks)this.tracks.forEach(a=>a.volume=St.d.music?.28*St.d.mv:0)},
  tone(f,d,ty,v,to,t0,dest){const c=this.c;if(!c)return;const t=t0||c.currentTime,o=c.createOscillator(),g=c.createGain();
   o.type=ty||'sine';o.frequency.setValueAtTime(f,t);if(to)o.frequency.exponentialRampToValueAtTime(to,t+d);
   g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(v,t+.012);g.gain.exponentialRampToValueAtTime(.0001,t+d);
@@ -266,14 +264,16 @@ const Au={c:null,tm:null,nx:0,st:0,
  win(){if(!this.c)return;[523,659,784,1046].forEach((f,i)=>this.tone(f,.22,'triangle',.35,0,this.c.currentTime+i*.1))},
  click(){const f=620*(.93+Math.random()*.14);this.tone(f,.07,'square',.1,f*1.39)},
  coin(){const f=1100*(.92+Math.random()*.16);this.tone(f,.09,'sine',.3,f*1.55)},
- music(on){if(!this.c)return;if(!on){clearInterval(this.tm);this.tm=null;return}if(this.tm)return;this.nx=this.c.currentTime+.1;
-  this.tm=setInterval(()=>{while(this.nx<this.c.currentTime+.5){const i=this.st++,tr=TRACKS[(i/MST|0)%TRACKS.length],k=i%MST,dt=tr.spd,f=261.63*2**(tr.mel[k]/12);
-   this.tone(f,dt*1.6,'triangle',.4,0,this.nx,this.mg);
-   this.tone(f*1.003,dt*1.4,'sine',.14,0,this.nx,this.mg);
-   this.tone(f*2**(7/12),dt*1.3,'sine',.12,0,this.nx,this.mg);
-   if(k%2===0)this.tone(130.8*2**(tr.bas[k>>1]/12),dt*2.4,'sine',.5,0,this.nx,this.mg);
-   if(k%8===0)[0,4,7].forEach((iv,j)=>this.tone(130.8*2**((tr.ch[k>>3]+iv)/12),dt*8.6,'sine',j?.05:.09,0,this.nx,this.mg));
-   this.nx+=dt}},90)}};
+ tracks:null,ti:0,
+ ensureTracks(){if(this.tracks)return;const MSRC=['music/m1.mp3','music/m2.mp3','music/m3.mp3','music/m4.mp3','music/m5.mp3'];
+  this.tracks=MSRC.map((src,i)=>{const a=new Audio(src);a.preload='auto';
+   a.addEventListener('ended',()=>{this.ti=(this.ti+1)%MSRC.length;this.playCur()});return a});},
+ playCur(){const a=this.tracks&&this.tracks[this.ti];if(!a)return;a.volume=St.d.music?.28*St.d.mv:0;
+  if(a.paused){try{a.currentTime=0}catch(e){}
+   const pr=a.play();pr&&pr.catch&&pr.catch(()=>{})}},
+ music(on){this.ensureTracks();
+  if(!on){this.tracks.forEach(a=>a.pause());return}this.playCur()},
+};
 function syncMusic(){Au.music(St.d.music&&!document.hidden)}
 /* ---------- renderer / scene ---------- */
 const cv=$('#c'),R=new THREE.WebGLRenderer({canvas:cv,antialias:true,powerPreference:'high-performance'});

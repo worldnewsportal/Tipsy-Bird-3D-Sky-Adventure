@@ -34,6 +34,7 @@ jobs:
           mkdir -p www
           cp src/index.html www/index.html
           cp -r src/vendor www/vendor
+          cp -r src/music www/music
           grep -q 'src="vendor/three.min.js"' www/index.html
           if grep -qE '(src|href)="https?://|url\(https?://' www/index.html; then
             echo 'External URL found in web files'; exit 1
