@@ -119,8 +119,8 @@ public class PlayGamesPlugin extends Plugin {
         if (data == null || data.isEmpty() || data.length() > MAX) { r.put("configured", true); call.resolve(r); return; }
         try {
             SnapshotsClient sc = PlayGames.getSnapshotsClient(getActivity());
-            Snapshot snap = Tasks.await(sc.open(SAVE_FILE, true,
-                    SnapshotsClient.RESOLUTION_POLICY_MOST_RECENTLY_MODIFIED), 20, TimeUnit.SECONDS);
+            Snapshot snap = openSnap(sc, true);
+            if (snap == null) { r.put("configured", true); r.put("ok", false); call.resolve(r); return; }
             SnapshotContents contents = snap.getSnapshotContents();
             contents.writeBytes(data.getBytes("UTF-8"));
             SnapshotMetadataChange ch = new SnapshotMetadataChange.Builder()
@@ -140,6 +140,30 @@ public class PlayGamesPlugin extends Plugin {
         call.resolve(r);
     }
 
+    /** Opens the save file with conflict auto-resolution (newest modified wins). */
+    private Snapshot openSnap(SnapshotsClient sc, boolean create) throws Exception {
+        Task<SnapshotsClient.DataOrConflict<Snapshot>> t = sc.open(SAVE_FILE, create,
+                SnapshotsClient.RESOLUTION_POLICY_MOST_RECENTLY_MODIFIED);
+        SnapshotsClient.DataOrConflict<Snapshot> dc = Tasks.await(t, 20, TimeUnit.SECONDS);
+        int guard = 0;
+        while (dc.isConflict() && guard++ < 2) {
+            SnapshotsClient.SnapshotConflict cf = dc.getConflict();
+            Snapshot pick = newer(cf.getConflictingSnapshot(), cf.getMatchingSnapshot());
+            if (pick == null) break;
+            dc = Tasks.await(sc.resolveConflict(cf, pick), 20, TimeUnit.SECONDS);
+        }
+        return dc.isConflict() ? null : dc.getData();
+    }
+
+    private Snapshot newer(Snapshot a, Snapshot b) {
+        if (a == null) return b;
+        if (b == null) return a;
+        long ta = 0, tb = 0;
+        try { if (a.getMetadata() != null) ta = a.getMetadata().getLastModifiedTimestamp(); } catch (Exception ignored) { }
+        try { if (b.getMetadata() != null) tb = b.getMetadata().getLastModifiedTimestamp(); } catch (Exception ignored) { }
+        return tb > ta ? b : a;
+    }
+
     @PluginMethod
     public void load(final PluginCall call) {
         JSObject r = new JSObject();
@@ -149,8 +173,8 @@ public class PlayGamesPlugin extends Plugin {
         if (!configured()) { call.resolve(r); return; }
         try {
             SnapshotsClient sc = PlayGames.getSnapshotsClient(getActivity());
-            Snapshot snap = Tasks.await(sc.open(SAVE_FILE, false,
-                    SnapshotsClient.RESOLUTION_POLICY_MOST_RECENTLY_MODIFIED), 20, TimeUnit.SECONDS);
+            Snapshot snap = openSnap(sc, false);
+            if (snap == null) { r.put("configured", true); r.put("empty", true); call.resolve(r); return; }
             SnapshotContents contents = snap.getSnapshotContents();
             byte[] b = contents.readFully();
             String data = b == null ? "" : new String(b, "UTF-8");
