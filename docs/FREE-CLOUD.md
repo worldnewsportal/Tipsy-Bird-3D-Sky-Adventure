@@ -14,7 +14,7 @@
 | 2. تفعيل تسجيل الدخول المجهول | Firebase Console | دقيقة |
 | 3. إنشاء قاعدة Realtime DB بقواعد أمان | Firebase Console | دقيقتان |
 | 4. نسخ مفتاحين (api + url) | Firebase Console | دقيقة |
-| 5. وضعهما في `tools/sync-cfg.json` من متصفح GitHub | github.com | دقيقة |
+| 5. وضع المفتاحين في GitHub Secrets (الأفضل) أو tools/sync-cfg.json | github.com | دقيقة |
 | 6. إعادة البناء تلقائيًا عند الحفظ | GitHub Actions | ~6 دقائق |
 
 ---
@@ -81,7 +81,25 @@
 
 ---
 
-## 5️⃣ إدخال المفتاحين في المستودع (من متصفح الهاتف)
+## 5️⃣ إدخال المفتاحين — طريقتان (اختر الأفضل لك)
+
+### 🥇 الطريقة المفضلة — GitHub Secrets (المفاتيح لا تظهر في المستودع إطلاقًا)
+
+1. في متصفح الهاتف افتح:
+   `https://github.com/worldnewsportal/Tipsy-Bird-3D-Sky-Adventure/settings/secrets/actions`
+2. اضغط **New repository secret** — أضف اثنين:
+
+| Name | القيمة |
+|---|---|
+| `FIREBASE_WEB_API_KEY` | مفتاح Web API Key (يبدأ بـ AIzaSy…) |
+| `FIREBASE_DB_URL` | رابط القاعدة (https://…firebasedatabase.app) |
+
+3. **لا حاجة لأي commit** — البناء القادم (أو اضغط Run workflow يدويًا من تبويب Actions) يلتقطهما تلقائيًا.
+
+> 🔒 لماذا هذه أفضل؟ المفاتيح مخفية عن كل من يتصفح المستودع وغير موجودة في تاريخ git.
+> (ملاحظة صادقة: مفتاح Firebase Web API Key تصميمهُ عام ويظهر داخل كل APK — الحماية الحقيقية لبيانات اللاعبين هي قواعد القاعدة في الخطوة 3. ولكن Secrets تخفي المفاتيح عن متصفحي المستودع ومن تاريخ git وتسمح لك بتبديلها لاحقًا بدون أي commit ظاهر.)
+
+### 🥈 الطريقة البديلة — التعديل المباشر في `tools/sync-cfg.json`
 
 1. افتح: `https://github.com/worldnewsportal/Tipsy-Bird-3D-Sky-Adventure/blob/vibe/fully-offline-c73d38/tools/sync-cfg.json`
 2. اضغط أيقونة ✏️ (القلم) لتعديله.
@@ -96,6 +114,8 @@
 
 4. اضغط **Commit changes** (على نفس الفرع `vibe/fully-offline-c73d38`).
 
+> ترتيب أولوية CI عند البناء: **Secrets أولاً** → وإن لم توجد استخدم الملف → وإن لم يوجد أيٌّ منهما تبقى اللعبة محلية 100%.
+
 ---
 
 ## 6️⃣ إعادة البناء (تلقائي)
@@ -107,7 +127,7 @@ cloud sync config: INJECTED (api=AIzaSy..., url=https://...)
 ```
 
 > ❗ ولو لم تضف المفاتيح أو تركتها فارغة: سيطبع
-> `cloud sync config: DORMANT (tools/sync-cfg.json empty or absent) - game stays 100% local`
+> `cloud sync config: DORMANT (no Secrets, tools/sync-cfg.json empty or absent) - game stays 100% local`
 > واللعبة تبقى محلية بالكامل — لا ضرر أبدًا.
 
 ---

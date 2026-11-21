@@ -41,25 +41,33 @@ jobs:
           fi
           python3 tools/check_i18n.py www/index.html
 
-      - name: Inject free cloud sync config (optional tools/sync-cfg.json)
+      - name: Inject free cloud sync config (GitHub Secrets preferred, tools/sync-cfg.json fallback)
+        env:
+          FB_API: ${{ secrets.FIREBASE_WEB_API_KEY }}
+          FB_URL: ${{ secrets.FIREBASE_DB_URL }}
         run: |
           python3 - <<'PYEOF'
           import json, os
           src = open('www/index.html', encoding='utf-8').read()
-          cfg = {'api': '', 'url': ''}
-          if os.path.isfile('tools/sync-cfg.json'):
-              try: cfg = json.load(open('tools/sync-cfg.json', encoding='utf-8'))
-              except Exception as e:
-                  print('sync-cfg.json unreadable ({}): cloud stays dormant'.format(e)); cfg = {'api': '', 'url': ''}
-          api = (cfg.get('api') or '').strip()
-          url = (cfg.get('url') or '').strip().rstrip('/')
+          api = (os.environ.get('FB_API') or '').strip()
+          url = (os.environ.get('FB_URL') or '').strip().rstrip('/')
+          src_used = 'GitHub Secrets (key hidden from repo)'
+          if not api or not url:
+              cfg = {'api': '', 'url': ''}
+              if os.path.isfile('tools/sync-cfg.json'):
+                  try: cfg = json.load(open('tools/sync-cfg.json', encoding='utf-8'))
+                  except Exception as e:
+                      print('sync-cfg.json unreadable ({}): ignoring'.format(e)); cfg = {'api': '', 'url': ''}
+              api = api or (cfg.get('api') or '').strip()
+              url = url or (cfg.get('url') or '').strip().rstrip('/')
+              src_used = 'tools/sync-cfg.json (committed file)'
           if api and url and '__' not in api and '__' not in url:
               assert src.count("'__FB_API__'") == 1 and src.count("'__FB_URL__'") == 1, 'cloud placeholders missing'
               src = src.replace("'__FB_API__'", "'" + api.replace("'", "") + "'").replace("'__FB_URL__'", "'" + url.replace("'", "") + "'")
               open('www/index.html', 'w', encoding='utf-8').write(src)
-              print('cloud sync config: INJECTED (api=' + api[:6] + '..., url=' + url + ')')
+              print('cloud sync config: INJECTED from ' + src_used + ' (api=' + api[:6] + '...)')
           else:
-              print('cloud sync config: DORMANT (tools/sync-cfg.json empty or absent) - game stays 100% local')
+              print('cloud sync config: DORMANT (no Secrets, tools/sync-cfg.json empty or absent) - game stays 100% local')
           PYEOF
 
       - name: Create Android project
