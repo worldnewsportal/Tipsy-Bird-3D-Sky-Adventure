@@ -40,9 +40,9 @@ if ! grep -q 'play-services-games\|play-services-games-v2' "$G"; then
 import sys; p=sys.argv[1]; s=open(p).read()
 old="    implementation 'com.unity3d.ads:unity-ads:4.22.0'\n"
 assert s.count(old)==1
-# games (v1 artifacts: SnapshotsClient + snapshot.Snapshot classes) AND games-v2 (PlayGames facade, GamesSignInClient, AuthenticationResult)
-s=s.replace(old, old+"    implementation 'com.google.android.gms:play-services-games:23.1.0'\n"
-+"    implementation 'com.google.android.gms:play-services-games-v2:21.0.0'\n")
+# play-services-games-v2 22.1.0 bundles EVERYTHING we need (PlayGames facade, GamesSignInClient,
+# AuthenticationResult, SnapshotsClient + snapshot.* classes) — the v1 artifact would duplicate classes
+s=s.replace(old, old+"    implementation 'com.google.android.gms:play-services-games-v2:22.1.0'\n")
 open(p,'w').write(s)
 PYG
 fi
@@ -159,8 +159,7 @@ if [ -z "$RSP" ] || [ "$RSP" -gt "$SC" ]; then echo "FAIL: registerPlugin(SavePl
 test -f "$JAVA_DIR/SavePlugin.java" || { echo "FAIL: SavePlugin.java missing"; exit 1; }
 
 echo "--- verifying Google Play cloud save integration ---"
-grep -q "com.google.android.gms:play-services-games:23.1.0" "$G" || { echo "FAIL: play-services-games dependency missing"; exit 1; }
-grep -q "com.google.android.gms:play-services-games-v2:21.0.0" "$G" || { echo "FAIL: play-services-games-v2 dependency missing"; exit 1; }
+grep -q "com.google.android.gms:play-services-games-v2:22.1.0" "$G" || { echo "FAIL: play-services-games-v2 dependency missing"; exit 1; }
 if [ "$GID" != "0" ]; then
   grep -q "com.google.android.gms.games.APP_ID" "$M" || { echo "FAIL: Play Games APP_ID meta-data missing"; exit 1; }
   grep -q "games_app_id" "$APP/res/values/strings.xml" || { echo "FAIL: games_app_id resource missing"; exit 1; }
