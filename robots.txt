@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://worldnewsportal.github.io/Tipsy-Bird-3D-Sky-Adventure/sitemap.xml
