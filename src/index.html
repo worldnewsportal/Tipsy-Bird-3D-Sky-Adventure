@@ -16,8 +16,8 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:
 #ui{position:fixed;inset:0;pointer-events:none}
 .scr{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:calc(16px + var(--sk)) 16px calc(18px + var(--sb) + var(--bb,0px));opacity:0;visibility:hidden;transition:opacity .35s,visibility .35s}
 .scr.on{opacity:1;visibility:visible}
-#s-set,#s-daily,#s-miss{z-index:5;background:#3a2a5c66}
-#s-set.on,#s-daily.on,#s-miss.on{pointer-events:auto}
+#s-set,#s-daily,#s-miss,#s-bk{z-index:5;background:#3a2a5c66}
+#s-set.on,#s-daily.on,#s-miss.on,#s-bk.on{pointer-events:auto}
 .logo{margin:0;text-align:center;font-weight:800;font-size:clamp(52px,17vw,92px);line-height:.95;color:#ffd23f;text-shadow:0 5px 0 #c4480f,0 9px 0 var(--ink),0 16px 22px #0004;transform:rotate(-3deg);animation:bob 2.4s ease-in-out infinite}
 @keyframes bob{50%{transform:rotate(-3deg) translateY(-9px)}}
 .tag{font-weight:800;font-size:30px;color:#fff;background:var(--teal);padding:0 18px;border-radius:14px;box-shadow:0 4px 0 var(--teald);transform:rotate(2deg)}
@@ -70,7 +70,7 @@ input[type=range]{pointer-events:auto;width:120px;accent-color:var(--teal)}
 #s-menu .btn.sm{padding:8px 12px;font-size:16px}
 .ms{display:flex;align-items:center;justify-content:space-between;gap:10px;text-align:start;border:3px solid var(--ink);border-radius:14px;padding:6px 10px;background:#fff}.ms>div{flex:1}.ms b{display:block;font-size:16px}.ms small{font-size:13px}.ms u{display:block;height:8px;background:#e6dff3;border-radius:6px;overflow:hidden;text-decoration:none;margin-top:4px}.ms s{display:block;height:100%;background:var(--teal);text-decoration:none}.ms span{font-size:24px;color:var(--teald)}
 #s-smap{z-index:6;background:#2a1d4788}
-#s-set,#s-daily,#s-miss,#s-smap{backdrop-filter:blur(7px)}
+#s-set,#s-daily,#s-miss,#s-smap,#s-bk{backdrop-filter:blur(7px)}
 #s-smap.on{pointer-events:auto}
 #s-smap .card{width:min(96vw,520px)}
 #mapGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;overflow:auto;flex:1;min-height:0;padding:2px 2px 6px}
@@ -197,12 +197,15 @@ html.bn{--bb:54px}
   <div class="row"><span>المكافآت الإعلانية</span><button class="sw" data-k="ads"></button></div>
   <div class="row"><span>حالة الإعلانات</span><b id="adSt" style="font-size:15px"></b><button class="btn t sm" id="bAdTest" style="display:none;min-width:0;padding:9px 14px;background:#3a7ad4;box-shadow:0 6px 0 #1c4a8a">اختبار</button></div><div id="adDiag" style="display:none;margin:-2px 2px 8px;padding:8px 12px;background:rgba(58,122,212,.12);border:1px solid rgba(120,180,255,.25);border-radius:10px;font:11px/1.8 monospace;color:#bcd6ff"></div>
   <div class="row"><span>حذف التقدّم</span><button class="btn sm" id="bWipe" style="width:auto;background:#e5484d;box-shadow:0 6px 0 #9a1f24">حذف</button></div>
+  <div class="row"><span>نسخة احتياطية محلية</span><button class="btn t sm" id="bExp" style="width:auto">تصدير</button><button class="btn t sm" id="bImp" style="width:auto">استيراد</button></div>
+  <div class="row"><span>الحفظ السحابي المجاني</span><b id="cloudSt" style="font-size:15px"></b></div>
   <div id="devBox"></div>
   <div class="row"><span>شروط الاستخدام</span><button class="btn t sm" id="bTerms" style="width:auto">عرض</button></div>
   <div class="row"><span>سياسة الخصوصية</span><button class="btn t sm" id="bPriv" style="width:auto">عرض</button></div>
   <div class="row"><span>اللغة</span><button class="btn t sm" id="bLang" style="width:auto">English</button></div><div id="crashBox" style="display:none;background:rgba(229,72,77,.12);border:1px solid #e5484d;border-radius:10px;padding:8px 10px;margin:8px 0;color:#ffb3b5;font-size:12px;white-space:pre-wrap;word-break:break-word;direction:ltr;text-align:left;max-height:130px;overflow:auto"></div><button class="btn" id="bDone">تم</button></div></section>
  <section class="scr" id="s-doc"><div class="card" style="width:min(96vw,540px);max-height:96vh;gap:8px"><h2 id="docTitle"></h2><div style="font-size:12.5px;opacity:.65" id="docDate"></div><div id="docBody" style="max-height:62vh;overflow:auto;padding:0 4px;font-size:14px;line-height:1.95;opacity:.94"></div><button class="btn" id="bDocX">رجوع</button></div></section>
  </div>
+<section class="scr" id="s-bk"><div class="card"><h2>نسخة احتياطية</h2><div id="bkInfo" style="font-size:12px;opacity:.65;line-height:1.7"></div><textarea id="bkTa" style="direction:ltr;width:100%;height:120px;background:rgba(0,0,0,.25);border:none;border-radius:12px;padding:10px;color:#fff6dc;font:12px/1.5 monospace;box-sizing:border-box;resize:none"></textarea><div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="btn" id="bBkOk">استيراد</button><button class="btn t" id="bBkX">إلغاء</button></div></div></section>
 <div id="flash"></div><div id="vig"></div><div id="toast"></div><div id="combo"></div><div id="fps"></div>
 <script src="vendor/three.min.js"></script>
 <script>
@@ -235,7 +238,7 @@ St.load();
 const DF=[{g0:4.4,gm:3.4,s0:3.5,sm:6,ac:.07},{g0:3.9,gm:2.9,s0:4,sm:7,ac:.09},{g0:3.5,gm:2.6,s0:4.8,sm:9,ac:.13}];
 const bestV=()=>St.d.bests[St.d.diff];
 let L=St.d.lang||((navigator.language||'en').toLowerCase().startsWith('ar')?'ar':'en');
-const EN={'جارٍ التحميل…':'Loading…','الطائر':'Tipsy','الطائش':'Bird','الأفضل:':'Best:','سهل':'Easy','عادي':'Normal','صعب':'Hard','المروج':'Meadow','الصحراء':'Desert','القطب':'Arctic','العب':'Play','الإعدادات':'Settings','👆 المس الشاشة للطيران':'👆 Tap to flap','إيقاف مؤقت':'Paused','المؤثرات':'Sound FX','الموسيقى':'Music','أداء منخفض':'Low-power mode','استئناف':'Resume','إعادة':'Restart','القائمة':'Menu','انتهت اللعبة':'Game Over','🏆 رقم قياسي جديد!':'🏆 New record!','النتيجة':'Score','العب مرة أخرى':'Play again','تم':'Done','اللغة':'Language','السرعة':'Speed','أنقذك الدرع!':'Shield saved you!','درع!':'Shield!','مثالي':'Perfect','كومبو!':'Combo!','المستوى':'Level','تم تفعيل وضع الأداء المنخفض':'Low-power mode enabled','المتجر':'Shop','رجوع':'Back','تابع':'Continue','عملات غير كافية':'Not enough coins','تم الشراء!':'Purchased!','مستوى المؤثرات':'SFX volume','مستوى الموسيقى':'Music volume','الاهتزاز':'Vibration','اهتزاز الكاميرا':'Screen shake','عرض FPS':'Show FPS','حذف التقدّم':'Reset progress','حذف':'Delete','هل تريد حذف كل التقدم؟':'Delete all progress?','كلاسيكي':'Classic','أزرق':'Bluey','وردي':'Rosy','نعناعي':'Mint','الظل':'Shadow','ثلجي':'Snowy','الروبوت':'Robot','ناري':'Blaze','الملاك':'Angel','الملك':'King','مغناطيس!':'Magnet!','بطيء!':'Slow-mo!','المهام':'Missions','مهمة مكتملة!':'Mission complete!','الأزياء':'Skins','التعزيزات':'Boosters','مسلّح ✓':'Armed ✓','تُستخدم في الجولة القادمة':'Used in your next run','تعذّر تشغيل الإعلان':'Ad unavailable','قوة الرفرفة':'Flap power','المؤثرات النصية':'Text effects','تلميح الطيران':'Flap hint','المكافآت الإعلانية':'Ad rewards','حالة الإعلانات':'Ad status','مفعّلة ✓':'Linked ✓','غير مرتبطة':'Not linked','اختبار':'Test','استمرار مجاني':'Free continue','عملات من النقاط':'Coins from score +','درع مجاني!':'Free shield!','النينجا':'Ninja','الفضائي':'Alien','التنين':'Dragon','الساموراي':'Samurai','الباندا':'Panda','البرق':'Bolt','الماس':'Diamond','الملكة':'Queen','الطاووس':'Peacock','الأسطورة':'Legend','مكافأة يومية':'Daily reward','استلم':'Claim','اليوم':'Day','جرافيكس':'Graphics','بسيط':'Basic','متوسط':'Medium','خارق':'Ultra','استمرار':'Resume','الإعلانات غير مرتبطة في هذه النسخة — احصل على أحدث نسخة من التطبيق':'Ads not linked in this build — get the latest app','البركان':'Volcano','المحيط':'Ocean','الفضاء':'Space','الأدغال':'Jungle','العاصفة':'Storm','الحمم':'Magma','الشعلة':'Flare','العنقاء':'Phoenix','المرجان':'Coral','الموجة':'Wave','اللؤلؤة':'Pearl','النيزك':'Comet','القمر':'Moon','المجرة':'Galaxy','النمر':'Tiger','الببغاء':'Parrot','الجامبو':'Jumbo','الرعد':'Thunder','الهبوب':'Gale','الغيوم':'Nimbus','افتح الماب أولاً':'Unlock this map first','الأفضل في هذا الماب':'Best on this map','مفاتيح المابات':'Map keys','العوالم':'Worlds','تغيير':'Change','اضغط للفتح':'Tap to open','أفضل نتيجة':'Best score','المفاتيح المطلوبة':'Keys required','شروط الاستخدام':'Terms of Use','سياسة الخصوصية':'Privacy Policy','عرض':'View','وثيقة اللعبة':'Game document','آخر تحديث':'Last updated'};
+const EN={'جارٍ التحميل…':'Loading…','الطائر':'Tipsy','الطائش':'Bird','الأفضل:':'Best:','سهل':'Easy','عادي':'Normal','صعب':'Hard','المروج':'Meadow','الصحراء':'Desert','القطب':'Arctic','العب':'Play','الإعدادات':'Settings','👆 المس الشاشة للطيران':'👆 Tap to flap','إيقاف مؤقت':'Paused','المؤثرات':'Sound FX','الموسيقى':'Music','أداء منخفض':'Low-power mode','استئناف':'Resume','إعادة':'Restart','القائمة':'Menu','انتهت اللعبة':'Game Over','🏆 رقم قياسي جديد!':'🏆 New record!','النتيجة':'Score','العب مرة أخرى':'Play again','تم':'Done','اللغة':'Language','السرعة':'Speed','أنقذك الدرع!':'Shield saved you!','درع!':'Shield!','مثالي':'Perfect','كومبو!':'Combo!','المستوى':'Level','تم تفعيل وضع الأداء المنخفض':'Low-power mode enabled','المتجر':'Shop','رجوع':'Back','تابع':'Continue','عملات غير كافية':'Not enough coins','تم الشراء!':'Purchased!','مستوى المؤثرات':'SFX volume','مستوى الموسيقى':'Music volume','الاهتزاز':'Vibration','اهتزاز الكاميرا':'Screen shake','عرض FPS':'Show FPS','حذف التقدّم':'Reset progress','حذف':'Delete','هل تريد حذف كل التقدم؟':'Delete all progress?','كلاسيكي':'Classic','أزرق':'Bluey','وردي':'Rosy','نعناعي':'Mint','الظل':'Shadow','ثلجي':'Snowy','الروبوت':'Robot','ناري':'Blaze','الملاك':'Angel','الملك':'King','مغناطيس!':'Magnet!','بطيء!':'Slow-mo!','المهام':'Missions','مهمة مكتملة!':'Mission complete!','الأزياء':'Skins','التعزيزات':'Boosters','مسلّح ✓':'Armed ✓','تُستخدم في الجولة القادمة':'Used in your next run','تعذّر تشغيل الإعلان':'Ad unavailable','قوة الرفرفة':'Flap power','المؤثرات النصية':'Text effects','تلميح الطيران':'Flap hint','المكافآت الإعلانية':'Ad rewards','حالة الإعلانات':'Ad status','مفعّلة ✓':'Linked ✓','غير مرتبطة':'Not linked','اختبار':'Test','استمرار مجاني':'Free continue','عملات من النقاط':'Coins from score +','درع مجاني!':'Free shield!','النينجا':'Ninja','الفضائي':'Alien','التنين':'Dragon','الساموراي':'Samurai','الباندا':'Panda','البرق':'Bolt','الماس':'Diamond','الملكة':'Queen','الطاووس':'Peacock','الأسطورة':'Legend','مكافأة يومية':'Daily reward','استلم':'Claim','اليوم':'Day','جرافيكس':'Graphics','بسيط':'Basic','متوسط':'Medium','خارق':'Ultra','استمرار':'Resume','الإعلانات غير مرتبطة في هذه النسخة — احصل على أحدث نسخة من التطبيق':'Ads not linked in this build — get the latest app','البركان':'Volcano','المحيط':'Ocean','الفضاء':'Space','الأدغال':'Jungle','العاصفة':'Storm','الحمم':'Magma','الشعلة':'Flare','العنقاء':'Phoenix','المرجان':'Coral','الموجة':'Wave','اللؤلؤة':'Pearl','النيزك':'Comet','القمر':'Moon','المجرة':'Galaxy','النمر':'Tiger','الببغاء':'Parrot','الجامبو':'Jumbo','الرعد':'Thunder','الهبوب':'Gale','الغيوم':'Nimbus','افتح الماب أولاً':'Unlock this map first','الأفضل في هذا الماب':'Best on this map','مفاتيح المابات':'Map keys','العوالم':'Worlds','تغيير':'Change','اضغط للفتح':'Tap to open','أفضل نتيجة':'Best score','المفاتيح المطلوبة':'Keys required','شروط الاستخدام':'Terms of Use','سياسة الخصوصية':'Privacy Policy','عرض':'View','وثيقة اللعبة':'Game document','آخر تحديث':'Last updated','نسخة احتياطية محلية':'Local backup','الحفظ السحابي المجاني':'Free cloud save','تصدير':'Export','استيراد':'Import','نسخة احتياطية':'Backup','كود غير صالح':'Invalid code','تم الاستيراد!':'Imported!','إلغاء':'Cancel'};
 const T=s=>L==='en'&&EN[s]||s;
 function lvlTxt(){const f=DF[St.d.diff];$('#lvl').textContent=T('السرعة')+' ×'+(Math.min(f.sm,f.s0+score*f.ac)/4).toFixed(1)}
 function applyLang(){const h=document.documentElement;h.lang=L;h.dir=L==='ar'?'rtl':'ltr';document.title=L==='ar'?'الطائر الطائش 3D':'Tipsy Bird 3D';
@@ -427,7 +430,7 @@ function renderShop(){const g=$('#grid'),hx=h=>'#'+h.toString(16).padStart(6,'0'
  const disc=(k,e)=>{const c=BG[k]||['#ffffff','#c8c8d8'];return '<span class="pvi" style="background:radial-gradient(90% 60% at 30% 15%,#ffffffcc,transparent 55%),linear-gradient(160deg,'+c[0]+','+c[1]+')">'+e+'</span>'};
  const birdSVG=s=>'<svg class="pvb" viewBox="0 0 52 50" aria-hidden="true"><ellipse cx="15" cy="30" rx="8" ry="5" fill="'+hx(s.o)+'"/><circle cx="26" cy="24" r="17" fill="'+hx(s.b)+'" stroke="#2b1d4488" stroke-width="2"/><ellipse cx="26" cy="33" rx="10.5" ry="7.5" fill="'+hx(s.l)+'"/><ellipse cx="16" cy="24" rx="7" ry="5" fill="'+hx(s.o)+'"/><circle cx="33" cy="16" r="5.6" fill="#fff" stroke="#2b1d4488" stroke-width="1"/><circle cx="34.5" cy="16" r="2.7" fill="#2b1d44"/><circle cx="35.4" cy="15" r=".9" fill="#fff"/><path d="M42 25l9 2.6-8 3.6z" fill="'+hx(s.k)+'"/></svg>';
  if(shopTab==='bo'){const rr=(el)=>{};PERM.forEach(b=>{const own=St.d.perm&&St.d.perm[b.k],btn=document.createElement('button');btn.className='sk'+(own?' on':'');
-  btn.innerHTML=disc('pm:'+b.k,b.ic)+'<div class="pvt"><b>'+(L==='en'?b.en:b.n)+'</b><small>'+(L==='en'?b.de:b.d)+' · '+(own?(L==='en'?'Owned \u2713':'تملك \u2713'):'🪙 '+b.p+' · '+(L==='en'?'permanent':'دائم'))+'</small></div>';
+  btn.innerHTML=disc('pm:'+b.k,b.ic)+'<div class="pvt"><b>'+(L==='en'?b.en:b.n)+'</b><small>'+(L==='en'?b.de:b.d)+' · '+(own?(L==='en'?'Owned ✓':'تملك ✓'):'🪙 '+b.p+' · '+(L==='en'?'permanent':'دائم'))+'</small></div>';
   btn.onclick=()=>{Au.init();if(own)return;if(St.d.coins<b.p){toast(T('عملات غير كافية'));return}St.d.coins-=b.p;St.d.perm[b.k]=true;St.save();renderShop();sync();Au.win();toast(T('تم الشراء!'))};
   g.appendChild(btn)});BST.forEach(b=>{const cnt=St.d.boost[b.k]||0,arm=St.d.arm===b.k,btn=document.createElement('button');btn.className='sk'+(arm?' on':'');
   btn.innerHTML=disc(b.k,b.ic)+'<div class="pvt"><b>'+(L==='en'?b.en:b.n)+'</b><small>'+(L==='en'?b.de:b.d)+' · '+(cnt>0?(arm?T('مسلّح ✓'):(L==='en'?'Owned ×'+cnt:'تملك ×'+cnt)):'🪙 '+b.p)+'</small></div>';
@@ -669,7 +672,7 @@ function quality(){const q=St.d.gq|0;
  if(q===2){sc.fog.near=30;sc.fog.far=130}else{sc.fog.near=35;sc.fog.far=100}
  rM.emissive.setHex(q===2?0x7a5200:0x000000);
  sc.traverse(o=>{if(o.material)o.material.needsUpdate=true});resize()}
-function sync(){$$('.sw').forEach(b=>b.classList.toggle('on',!!St.d[b.dataset.k]));$('#bSnd').innerHTML=IC((St.d.sfx||St.d.music)?'snd':'mute');$$('.bestv').forEach(e=>e.textContent=bestV());$$('[data-d]').forEach(b=>b.classList.toggle('on',+b.dataset.d===St.d.diff));$$('[data-m]').forEach(b=>b.classList.toggle('on',+b.dataset.m===St.d.map));$$('[data-g]').forEach(b=>b.classList.toggle('on',+b.dataset.g===(St.d.gq|0)));$$('.coinv').forEach(e=>e.textContent=St.d.coins);$$('.mkeys').forEach(e=>e.textContent=St.d.mKeys||0);$$('[data-m]').forEach(b=>{const lk=b.querySelector('.lk');if(lk){const m=+b.dataset.m,c=mapUnlocked(m);lk.hidden=c;if(!c)lk.textContent='🔑 '+(MAPU[m]||{k:0}).k}});$('#fps').style.display=St.d.fps?'block':'none';$('#coins').textContent='🪙 '+St.d.coins;Au.vol();syncMusic();mapsBtn();renderMaps();mBadge();adStatus();maybeAdGift();maybeAdCoins();umbn()}
+function sync(){$$('.sw').forEach(b=>b.classList.toggle('on',!!St.d[b.dataset.k]));$('#bSnd').innerHTML=IC((St.d.sfx||St.d.music)?'snd':'mute');$$('.bestv').forEach(e=>e.textContent=bestV());$$('[data-d]').forEach(b=>b.classList.toggle('on',+b.dataset.d===St.d.diff));$$('[data-m]').forEach(b=>b.classList.toggle('on',+b.dataset.m===St.d.map));$$('[data-g]').forEach(b=>b.classList.toggle('on',+b.dataset.g===(St.d.gq|0)));$$('.coinv').forEach(e=>e.textContent=St.d.coins);$$('.mkeys').forEach(e=>e.textContent=St.d.mKeys||0);$$('[data-m]').forEach(b=>{const lk=b.querySelector('.lk');if(lk){const m=+b.dataset.m,c=mapUnlocked(m);lk.hidden=c;if(!c)lk.textContent='🔑 '+(MAPU[m]||{k:0}).k}});$('#fps').style.display=St.d.fps?'block':'none';$('#coins').textContent='🪙 '+St.d.coins;Au.vol();syncMusic();mapsBtn();renderMaps();mBadge();adStatus();maybeAdGift();maybeAdCoins();umbn();try{cloudStatus()}catch(_e){}}
 /* ---------- controls ---------- */
 const pause=()=>{if(state===S.PLAYING)setState(S.PAUSED)},resume=()=>{if(state===S.PAUSED){hold=.7;setState(S.PLAYING)}};
 const go=(fn,blip)=>e=>{Au.init();if(blip!==0)Au.click();e.currentTarget.blur();fn()};
@@ -797,6 +800,21 @@ priv:{ar:'سياسة الخصوصية',en:'Privacy Policy',s:[
 const DOC_URL={terms:'https://worldnewsportal.github.io/Tipsy-Bird-3D-Sky-Adventure/terms.html',priv:'https://worldnewsportal.github.io/Tipsy-Bird-3D-Sky-Adventure/privacy.html'};
 const openDoc=(k,direct)=>{if(direct&&navigator.onLine!==false){try{window.open(DOC_URL[k],'_blank');return}catch(e){}}const d=LEGAL[k],en=L==='en';$('#docTitle').textContent=en?d.en:d.ar;$('#docBody').dir=en?'ltr':'rtl';$('#docTitle').dir=en?'ltr':'rtl';$('#docDate').textContent=(L==='en'?'Last updated':'آخر تحديث')+' — 2026-11-20';$('#docBody').innerHTML=d.s.map(x=>'<h4 style="margin:12px 0 2px;font-size:15px;color:var(--ink)">'+(en?x[2]:x[0])+'</h4><p style="margin:0;font-size:13.5px;opacity:.9">'+(en?x[3]:x[1])+'</p>').join('');$('#s-doc').classList.add('on')};
 bind('#bTerms',()=>openDoc('terms',1));bind('#bPriv',()=>openDoc('priv',1));bind('#bDocX',()=>$('#s-doc').classList.remove('on'));
+const saveCode=()=>{try{return 'TB3D1.'+btoa(unescape(encodeURIComponent(JSON.stringify(St.d))))}catch(e){return ''}};
+function bkShow(txt){$('#bkTa').value=txt||'';$('#bkInfo').textContent=txt?(L==='en'?'Save size: '+Math.round((txt.length/1024)*10)/10+' KB — copy this code and keep it anywhere':'حجم الحفظ: '+Math.round(txt.length/1024*10)/10+'KB — انسخ الكود واحفظه في أي مكان'):(L==='en'?'Paste a backup code then tap Import':'الصق كود النسخة الاحتياطية ثم اضغط استيراد');$('#s-bk').classList.add('on')}
+bind('#bExp',()=>{Au.init();Au.click();const code=saveCode();
+ try{navigator.clipboard&&navigator.clipboard.writeText(code).then(()=>toast(L==='en'?'Copied ✓':'تم النسخ ✓')).catch(()=>{})}catch(e){}
+ try{navigator.share&&navigator.share({title:'Tipsy Bird 3D backup',text:code}).catch(()=>{})}catch(e){}
+ bkShow(code)});
+bind('#bImp',()=>{Au.init();Au.click();bkShow('')});
+bind('#bBkX',()=>{Au.click();$('#s-bk').classList.remove('on')});
+bind('#bBkOk',()=>{Au.init();Au.click();const v=($('#bkTa').value||'').trim();
+ const bad=()=>toast(T('كود غير صالح'));
+ if(v.indexOf('TB3D1.')!==0){bad();return}
+ try{const j=JSON.parse(decodeURIComponent(escape(atob(v.slice(6)))));
+  if(!j||typeof j!=='object'||!Array.isArray(j.bests)||!Array.isArray(j.own)){bad();return}
+  localStorage.setItem('tipsy3d',JSON.stringify(j));toast(T('تم الاستيراد!'));setTimeout(()=>location.reload(),600)}catch(e){bad()}});
+
 bind('#bLang',()=>{L=L==='en'?'ar':'en';St.d.lang=L;St.save();applyLang()});
 bind('#bShop',()=>{shopOn=true;renderShop();ui()});
 $$('[data-t]').forEach(b=>b.addEventListener('click',()=>{Au.init();Au.click();shopTab=b.dataset.t;$$('[data-t]').forEach(x=>x.classList.toggle('on',x===b));renderShop()}));
@@ -818,7 +836,7 @@ addEventListener('keydown',e=>{if(e.code==='Space'||e.code==='ArrowUp'){e.preven
  else if(e.code==='Escape'||e.code==='KeyP'){state===S.PLAYING?pause():resume()}});
 document.addEventListener('gesturestart',e=>e.preventDefault());
 document.addEventListener('contextmenu',e=>e.preventDefault());
-document.addEventListener('visibilitychange',()=>{if(document.hidden){pause();Au.music(false);if(Au.c)Au.c.suspend();try{PB.doPush(true)}catch(e){}}else{last=null;if(Au.c)Au.c.resume();syncMusic()}});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){pause();Au.music(false);if(Au.c)Au.c.suspend();try{PB.doPush(true)}catch(e){}try{FS.doPush(true)}catch(e){}}else{last=null;if(Au.c)Au.c.resume();syncMusic()}});
 addEventListener('blur',pause);addEventListener('resize',resize);addEventListener('orientationchange',()=>setTimeout(resize,200));
 /* ---------- Unity Ads bridge (rewarded only, user-initiated) ---------- */
 const AD_GIFT=15,AD_COOL=180000,AD_PLACE='Rewarded_Android',IN_PLACE='Interstitial_Android',BN_PLACE='Banner_Android',INT_EVERY=4,INT_COOL=120000;
@@ -883,9 +901,50 @@ const PB={st:'idle',t:null,nPull:0,
   if(!navigator.onLine){return}
   try{const d=JSON.parse(JSON.stringify(St.d));d.cloud=Date.now();St.d.cloud=d.cloud;
    Promise.resolve(p.save({data:JSON.stringify(d),ts:d.cloud})).then(r=>{if(r&&r.ok)this.st='synced'}).catch(()=>{})}catch(e){}}};
-St.save=(function(orig){return function(){orig.apply(St,arguments);try{PB.push()}catch(e){}}})(St.save);
+St.save=(function(orig){return function(){orig.apply(St,arguments);try{PB.push()}catch(e){}try{FS.push()}catch(e){}}})(St.save);
 PB.init();
 addEventListener('online',()=>{try{PB.doPush()}catch(e){}});
+
+/* ---------- free cloud sync (Firebase Realtime DB REST, anonymous auth, no SDK) ---------- */
+const SYNC_CFG={api:'__FB_API__',url:'__FB_URL__'};
+const FS={st:'off',t:null,uid:null,tok:null,rt:null,nPull:0,
+ cfg(){return SYNC_CFG&&SYNC_CFG.api&&SYNC_CFG.api.indexOf('__')<0&&SYNC_CFG.url&&SYNC_CFG.url.indexOf('__')<0},
+ ls(){try{return JSON.parse(localStorage.getItem('tipsy3d_fs')||'null')}catch(e){return null}},
+ init(){if(!this.cfg())return;
+  const c=this.ls();if(c&&c.uid&&c.rt){this.uid=c.uid;this.tok=c.tok;this.rt=c.rt}else{this.uid=null;this.tok=null;this.rt=null}
+  this.st='pending';this.auth(()=>this.pull())},
+ persist(){try{localStorage.setItem('tipsy3d_fs',JSON.stringify({uid:this.uid,tok:this.tok,rt:this.rt}))}catch(e){}},
+ auth(cb){
+  if(this.tok&&this.uid){this.st='on';cb();return}
+  if(!navigator.onLine)return;
+  if(this.rt){fetch('https://securetoken.googleapis.com/v1/token?key='+SYNC_CFG.api,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({grant_type:'refresh_token',refresh_token:this.rt})})
+   .then(r=>r.json()).then(r=>{if(r.id_token&&r.user_id){this.uid=r.user_id;this.tok=r.id_token;this.rt=r.refresh_token;this.persist();this.st='on';cb()}else this.anon(cb)}).catch(()=>{this.st='error'});return}
+  this.anon(cb)},
+ anon(cb){if(!navigator.onLine)return;
+  fetch('https://identitytoolkit.googleapis.com/v1/accounts:signUp?key='+SYNC_CFG.api,{method:'POST',headers:{'Content-Type':'application/json'},body:'{"returnSecureToken":true}'})
+   .then(r=>r.json()).then(r=>{if(r.localId){this.uid=r.localId;this.tok=r.idToken;this.rt=r.refreshToken;this.persist();this.st='on';cb()}else this.st='error'}).catch(()=>{this.st='error'})},
+ push(){if(!this.cfg()||this.st!=='on'||this.t)return;this.t=setTimeout(()=>{this.t=null;this.doPush()},9000)},
+ doPush(now){if(!this.cfg()||this.st!=='on'||!navigator.onLine)return;if(now&&this.t){clearTimeout(this.t);this.t=null}
+  try{const d=JSON.parse(JSON.stringify(St.d));d.cloud=Date.now();St.d.cloud=d.cloud;
+   const body=JSON.stringify({p:JSON.stringify(d),ts:d.cloud});
+   fetch(SYNC_CFG.url+'/saves/'+this.uid+'.json?auth='+this.tok,{method:'PUT',headers:{'Content-Type':'application/json'},body:body})
+    .then(r=>{if(!r.ok){if(r.status===401){this.tok=null;this.auth(()=>this.doPush())}}}).catch(()=>{})}catch(e){}},
+ setT(){this.tok=null;this.auth(()=>this.pull())},
+ pull(){if(!this.cfg()||this.st!=='on'||!navigator.onLine)return;if(++this.nPull>3)return;
+  fetch(SYNC_CFG.url+'/saves/'+this.uid+'.json?auth='+this.tok).then(r=>r.json()).then(v=>{
+   if(!v||!v.p||!v.ts){this.push();return}
+   const ct=+v.ts||0,lcl=+(St.d.cloud||0);
+   if(ct<=lcl){this.push();return}
+   try{const d=JSON.parse(v.p);if(!d||typeof d!=='object')return;d.cloud=ct;localStorage.setItem('tipsy3d',JSON.stringify(d));location.reload()}catch(e){}
+  }).catch(()=>{this.tok=null;this.auth(()=>this.pull())})}};
+function cloudStatus(){const el=$('#cloudSt');if(!el)return;
+ const parts=[];
+ try{if(PB.pl()&&PB.st==='signed-in')parts.push(L==='en'?'Google Play ✓':'Google Play ✓')}catch(_){}
+ try{if(FS.cfg())parts.push(FS.st==='on'?(L==='en'?'Cloud ✓ (free)':'سحابة مجانية ✓'):FS.st==='pending'?'…':(L==='en'?'Cloud: error':'سحابة: تعذّر'))}catch(_){}
+ if(!parts.length)el.textContent=L==='en'?'Local 100% ✓ (free cloud: not set up)':'محلي 100% ✓ (السحابة: غير مفعّلة)';
+ else el.textContent=parts.join(' · ')}
+PB.init();
+FS.init();
 
 function maybeAdGift(){const el=$('#bAdGift');if(!el)return;el.style.display=St.d.ads===false?'none':''}
 function maybeAdCoins(){const el=$('#bAdCoins');if(!el)return;el.style.display=St.d.ads===false?'none':'';if(St.d.ads!==false)el.innerHTML=IC('gift')+(L==='en'?'+'+AD_GIFT+' coins':'+'+AD_GIFT+' عملات')}

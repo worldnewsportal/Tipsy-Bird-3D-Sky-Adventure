@@ -41,6 +41,27 @@ jobs:
           fi
           python3 tools/check_i18n.py www/index.html
 
+      - name: Inject free cloud sync config (optional tools/sync-cfg.json)
+        run: |
+          python3 - <<'PYEOF'
+          import json, os
+          src = open('www/index.html', encoding='utf-8').read()
+          cfg = {'api': '', 'url': ''}
+          if os.path.isfile('tools/sync-cfg.json'):
+              try: cfg = json.load(open('tools/sync-cfg.json', encoding='utf-8'))
+              except Exception as e:
+                  print('sync-cfg.json unreadable ({}): cloud stays dormant'.format(e)); cfg = {'api': '', 'url': ''}
+          api = (cfg.get('api') or '').strip()
+          url = (cfg.get('url') or '').strip().rstrip('/')
+          if api and url and '__' not in api and '__' not in url:
+              assert src.count("'__FB_API__'") == 1 and src.count("'__FB_URL__'") == 1, 'cloud placeholders missing'
+              src = src.replace("'__FB_API__'", "'" + api.replace("'", "") + "'").replace("'__FB_URL__'", "'" + url.replace("'", "") + "'")
+              open('www/index.html', 'w', encoding='utf-8').write(src)
+              print('cloud sync config: INJECTED (api=' + api[:6] + '..., url=' + url + ')')
+          else:
+              print('cloud sync config: DORMANT (tools/sync-cfg.json empty or absent) - game stays 100% local')
+          PYEOF
+
       - name: Create Android project
         run: |
           npx cap add android
