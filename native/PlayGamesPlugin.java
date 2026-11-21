@@ -148,9 +148,9 @@ public class PlayGamesPlugin extends Plugin {
         int guard = 0;
         while (dc.isConflict() && guard++ < 2) {
             SnapshotsClient.SnapshotConflict cf = dc.getConflict();
-            Snapshot pick = newer(cf.getConflictingSnapshot(), cf.getMatchingSnapshot());
+            Snapshot pick = newer(cf.getConflictingSnapshot(), cf.getSnapshot());
             if (pick == null) break;
-            dc = Tasks.await(sc.resolveConflict(cf, pick), 20, TimeUnit.SECONDS);
+            dc = Tasks.await(sc.resolveConflict(cf.getConflictId(), pick), 20, TimeUnit.SECONDS);
         }
         return dc.isConflict() ? null : dc.getData();
     }
