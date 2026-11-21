@@ -216,7 +216,7 @@ if(!window.THREE){$('#s-load').innerHTML='<h1 class="logo" style="font-size:32px
 const S={LOADING:0,MENU:1,READY:2,PLAYING:3,PAUSED:4,OVER:5};
 let state=S.LOADING;
 /* ---------- storage ---------- */
-const St={d:{bests:[0,0,0],diff:1,coins:0,lang:null,map:0,skin:0,own:[0],dr:null,ms:null,mi:null,boost:{shield:0,magnet:0,slow:0,double:0,flapPower:0,flapSoft:0,wide:0,magLong:0,slowLong:0,coinPipe:0,headStart:0,mystery:0,eagleRun:0,safeRun:0,pfx2:0},arm:null,adT:0,revT:0,ioC:0,ioT:0,pop:true,hint:true,ads:true,fv:1,perm:{magnet:false,safe:false,gap:false,coin:false,lvlShield:false,eagle:false,perfCoin:false},sv:1,mv:1,vib:true,shk:true,fps:false,sfx:true,music:true,gq:1,},
+const St={d:{bests:[0,0,0],diff:1,coins:0,lang:null,map:0,skin:0,own:[0],dr:null,ms:null,mi:null,boost:{shield:0,magnet:0,slow:0,double:0,flapPower:0,flapSoft:0,wide:0,magLong:0,slowLong:0,coinPipe:0,headStart:0,mystery:0,eagleRun:0,safeRun:0,pfx2:0},arm:null,adT:0,revT:0,ioC:0,ioT:0,pop:true,hint:true,ads:true,fv:1,perm:{magnet:false,safe:false,gap:false,coin:false,lvlShield:false,eagle:false,perfCoin:false},sv:1,mv:1,vib:true,shk:true,fps:false,sfx:true,music:true,gq:1,cloud:0,},
  load(){try{const o=JSON.parse(localStorage.getItem('tipsy3d')||'{}');Object.assign(this.d,o);if(o.gq==null&&o.low===true)this.d.gq=0}catch(e){}
   try{const d=this.d;
   if(!Array.isArray(d.bests)||d.bests.length!==3)d.bests=[d.bests|0,0,0];d.bests=d.bests.map(v=>+v|0);
@@ -818,7 +818,7 @@ addEventListener('keydown',e=>{if(e.code==='Space'||e.code==='ArrowUp'){e.preven
  else if(e.code==='Escape'||e.code==='KeyP'){state===S.PLAYING?pause():resume()}});
 document.addEventListener('gesturestart',e=>e.preventDefault());
 document.addEventListener('contextmenu',e=>e.preventDefault());
-document.addEventListener('visibilitychange',()=>{if(document.hidden){pause();Au.music(false);if(Au.c)Au.c.suspend()}else{last=null;if(Au.c)Au.c.resume();syncMusic()}});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){pause();Au.music(false);if(Au.c)Au.c.suspend();try{PB.doPush(true)}catch(e){}}else{last=null;if(Au.c)Au.c.resume();syncMusic()}});
 addEventListener('blur',pause);addEventListener('resize',resize);addEventListener('orientationchange',()=>setTimeout(resize,200));
 /* ---------- Unity Ads bridge (rewarded only, user-initiated) ---------- */
 const AD_GIFT=15,AD_COOL=180000,AD_PLACE='Rewarded_Android',IN_PLACE='Interstitial_Android',BN_PLACE='Banner_Android',INT_EVERY=4,INT_COOL=120000;
@@ -866,6 +866,27 @@ window.addEventListener('offline',()=>{UA.online=false;umbn();adStatus();maybeAd
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout(netRetry,900)});
 setInterval(()=>{if(!UA.ready)netRetry()},30000);
 
+/* ---------- Google Play cloud save (Saved Games API, auto sign-in v2) ---------- */
+const PB={st:'idle',t:null,nPull:0,
+ pl(){try{const C=window.Capacitor;if(!C)return null;return C.getPlugin?C.getPlugin('PlayGames'):(C.Plugins&&C.Plugins.PlayGames)||null}catch(e){return null}},
+ init(){const p=this.pl();if(!p||this.st!=='idle')return;this.st='waiting';
+  Promise.resolve(p.init()).then(r=>{if(r&&r.configured&&r.signedIn){this.st='signed-in';this.pull()}else this.st=r&&r.configured?'signed-out':'off'}).catch(()=>{this.st='error'})},
+ pull(){const p=this.pl();if(!p)return;if(++this.nPull>3)return;
+  Promise.resolve(p.load()).then(r=>{
+   if(!(r&&r.configured))return;
+   const ct=+r.ts||0,lcl=+(St.d.cloud||0);
+   if(r.empty||!r.data){this.push();return}
+   if(ct>lcl){try{localStorage.setItem('tipsy3d',r.data);const d=JSON.parse(r.data);if(d&&typeof d==='object'){d.cloud=ct;localStorage.setItem('tipsy3d',JSON.stringify(d))}location.reload();return}catch(e){}}
+   this.push()}).catch(()=>{this.push()})},
+ push(){if(this.t||this.st!=='signed-in')return;this.t=setTimeout(()=>{this.t=null;this.doPush()},8000)},
+ doPush(now){const p=this.pl();if(!p||this.st!=='signed-in')return;if(now&&this.t){clearTimeout(this.t);this.t=null}
+  if(!navigator.onLine){return}
+  try{const d=JSON.parse(JSON.stringify(St.d));d.cloud=Date.now();St.d.cloud=d.cloud;
+   Promise.resolve(p.save({data:JSON.stringify(d),ts:d.cloud})).then(r=>{if(r&&r.ok)this.st='synced'}).catch(()=>{})}catch(e){}}};
+St.save=(function(orig){return function(){orig.apply(St,arguments);try{PB.push()}catch(e){}}})(St.save);
+PB.init();
+addEventListener('online',()=>{try{PB.doPush()}catch(e){}});
+
 function maybeAdGift(){const el=$('#bAdGift');if(!el)return;el.style.display=St.d.ads===false?'none':''}
 function maybeAdCoins(){const el=$('#bAdCoins');if(!el)return;el.style.display=St.d.ads===false?'none':'';if(St.d.ads!==false)el.innerHTML=IC('gift')+(L==='en'?'+'+AD_GIFT+' coins':'+'+AD_GIFT+' عملات')}
 function adCoinsOk(){St.d.adT=Date.now();St.d.coins+=AD_GIFT;St.save();sync();renderShop();Au.win();toast((L==='en'?'Bonus coins! +':'مكافر الإعلان.. +')+AD_GIFT+' 🪙');maybeAdGift();maybeAdCoins()}
@@ -901,6 +922,7 @@ function renderDev(){const box=$('#devBox');box.innerHTML='';const H=t=>{const h
   devLine(box,'localStorage: '+(lw?'OK':'BROKEN')+' | size: '+raw.length+' B | native mirror: on (3s)');
   devLine(box,'maps unlocked: '+[3,4,5,6,7].filter(mapUnlocked).length+'/5 | keys: '+(St.d.mKeys||0)+' | coins: '+St.d.coins+' | skin: '+(St.d.skin|0)+'/34 | map: '+(St.d.map|0));
   devLine(box,'mBests: '+JSON.stringify(St.d.mBests||{}));
+  const pgs=PB.pl();devLine(box,'cloud save: '+PB.st+(pgs?' (plugin Y)':' (plugin N)')+' | last push time: '+(St.d.cloud||0));
   H('ADS');
   devLine(box,'plugin: '+(UA.P?'YES':'NO')+' | ready: '+UA.ready+' | online: '+UA.isOn()+' | rewarded: '+UA.ok+' | interstitial: '+UA.okIn+' | banner: '+UA.okBn);
   const D=UA.diag||{};['init','Rewarded','Interstitial','Banner'].forEach(k=>{if(D[k])devLine(box,'  '+k+': '+D[k])});

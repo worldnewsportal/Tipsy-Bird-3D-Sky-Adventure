@@ -99,6 +99,13 @@ jobs:
           export KS_PASS
           $BT/apksigner sign --ks release.jks --ks-key-alias $KEY_ALIAS --ks-pass env:KS_PASS --out TipsyBird3D.apk aligned.apk
           $BT/apksigner verify TipsyBird3D.apk
+          CERT=$($BT/apksigner verify --print-certs TipsyBird3D.apk | grep 'SHA-1 digest' | head -1 | sed 's/.*digest: //')
+          {
+            echo "### 📋 SHA-1 توقيع اللعبة (ثابت — لربط Google Play Games)"
+            echo '```'
+            echo "$CERT"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Share APK (release + direct link)
         env:

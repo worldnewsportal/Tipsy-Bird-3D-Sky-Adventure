@@ -16,6 +16,7 @@ fi
 mkdir -p "$JAVA_DIR"
 cp native/UnityAdsPlugin.java "$JAVA_DIR/UnityAdsPlugin.java"
 cp native/SavePlugin.java "$JAVA_DIR/SavePlugin.java"
+cp native/PlayGamesPlugin.java "$JAVA_DIR/PlayGamesPlugin.java"
 
 # 2c) Auto Backup: Android/Google device backup restores sharedprefs (save mirror) after uninstall+reinstall
 if grep -q 'android:allowBackup="false"' "$M"; then
@@ -29,6 +30,41 @@ fi
 G=android/app/build.gradle
 if ! grep -q 'com.unity3d.ads:unity-ads' "$G"; then
   sed -i "0,/dependencies {/s//dependencies {\n    implementation 'com.unity3d.ads:unity-ads:4.22.0'/" "$G"
+fi
+
+# 1b) Google Play Games Services v2 (cloud save / Saved Games API)
+GID=$(cat tools/games-id.txt 2>/dev/null | tr -dc '0-9' || true)
+[ -n "$GID" ] || GID=0
+if ! grep -q 'play-services-games' "$G"; then
+  python3 - "$G" <<'PYG'
+import sys; p=sys.argv[1]; s=open(p).read()
+old="    implementation 'com.unity3d.ads:unity-ads:4.22.0'\n"
+assert s.count(old)==1
+s=s.replace(old, old+"    implementation 'com.google.android.gms:play-services-games:23.1.0'\n")
+open(p,'w').write(s)
+PYG
+fi
+
+# 1c) Play Games App ID resource + manifest meta-data.
+#     IMPORTANT: meta-data is ONLY injected when a real games ID exists in
+#     tools/games-id.txt — with the default '0' placeholder we inject nothing,
+#     because the GPGS SDK can refuse to start on malformed APP_ID values at
+#     app start (hard crash risk). Plugin side also no-ops without real ID.
+if [ "$GID" != "0" ]; then
+  if ! grep -q 'games_app_id' "$APP/res/values/strings.xml" 2>/dev/null; then
+    sed -i "s#</resources>#    <string name=\"games_app_id\">$GID</string>\n</resources>#" "$APP/res/values/strings.xml"
+  fi
+  if ! grep -q 'com.google.android.gms.games.APP_ID' "$M"; then
+    python3 - "$M" <<'PYM'
+import sys; p=sys.argv[1]; s=open(p).read()
+old="    </application>"
+assert s.count(old)==1
+s=s.replace(old, '        <meta-data android:name="com.google.android.gms.games.APP_ID" android:value="@string/games_app_id" />\n    </application>')
+open(p,'w').write(s)
+PYM
+  fi
+else
+  sed -i '/com.google.android.gms.games.APP_ID/d' "$M" || true
 fi
 
 # 2b) Network state permission (Unity Ads SDK checks connectivity on init/load)
@@ -78,6 +114,7 @@ public class MainActivity extends BridgeActivity {
         });
         registerPlugin(UnityAdsPlugin.class);
         registerPlugin(SavePlugin.class);
+        registerPlugin(PlayGamesPlugin.class);
         super.onCreate(savedInstanceState);
         try {
             File f = new File(getFilesDir(), "crash.log");
@@ -118,6 +155,19 @@ grep -q 'registerPlugin(SavePlugin.class)' "$MF" || { echo "FAIL: SaveBackup plu
 RSP=$(grep -n 'registerPlugin(SavePlugin.class)' "$MF" | head -1 | cut -d: -f1)
 if [ -z "$RSP" ] || [ "$RSP" -gt "$SC" ]; then echo "FAIL: registerPlugin(SavePlugin.class) must run before super.onCreate"; exit 1; fi
 test -f "$JAVA_DIR/SavePlugin.java" || { echo "FAIL: SavePlugin.java missing"; exit 1; }
+
+echo "--- verifying Google Play cloud save integration ---"
+grep -q "com.google.android.gms:play-services-games" "$G" || { echo "FAIL: play-services-games dependency missing"; exit 1; }
+if [ "$GID" != "0" ]; then
+  grep -q "com.google.android.gms.games.APP_ID" "$M" || { echo "FAIL: Play Games APP_ID meta-data missing"; exit 1; }
+  grep -q "games_app_id" "$APP/res/values/strings.xml" || { echo "FAIL: games_app_id resource missing"; exit 1; }
+else
+  grep -q "com.google.android.gms.games.APP_ID" "$M" && { echo "FAIL: placeholder APP_ID meta-data must NOT be injected"; exit 1; }
+  echo "note: cloud save dormant (no tools/games-id.txt) — game runs 100% offline-safe"
+fi
+grep -q "registerPlugin(PlayGamesPlugin.class)" "$MF" || { echo "FAIL: PlayGamesPlugin not registered in MainActivity"; exit 1; }
+test -f "$JAVA_DIR/PlayGamesPlugin.java" || { echo "FAIL: PlayGamesPlugin.java missing"; exit 1; }
+echo "OK: PlayGamesPlugin cloud-save integration is in place (games id: $GID$([ "$GID" = "0" ] && echo ' — PLACEHOLDER, add tools/games-id.txt'))"
 grep -q 'getSharedPreferences(PREFS' "$JAVA_DIR/SavePlugin.java" || { echo "FAIL: SavePlugin must store into SharedPreferences (Auto Backup target)"; exit 1; }
 grep -q 'android:allowBackup="true"' "$M" || { echo "FAIL: android:allowBackup=true required so Android/Google restores the save after uninstall"; exit 1; }
 echo "OK: native save backup (SharedPreferences + Auto Backup) in place"
