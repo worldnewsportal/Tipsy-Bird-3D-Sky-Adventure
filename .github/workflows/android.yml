@@ -45,6 +45,7 @@ jobs:
         env:
           FB_API: ${{ secrets.FIREBASE_WEB_API_KEY }}
           FB_URL: ${{ secrets.FIREBASE_DB_URL }}
+          BUILD_NO: ${{ github.run_number }}
         run: |
           python3 - <<'PYEOF'
           import json, os
@@ -68,6 +69,13 @@ jobs:
               print('cloud sync config: INJECTED from ' + src_used + ' (api=' + api[:6] + '...)')
           else:
               print('cloud sync config: DORMANT (no Secrets, tools/sync-cfg.json empty or absent) - game stays 100% local')
+          bno = (os.environ.get('BUILD_NO') or 'dev').strip()
+          if src.count("'__BUILD__'") == 1:
+              src = src.replace("'__BUILD__'", "'" + bno + "'", 1)
+              open('www/index.html', 'w', encoding='utf-8').write(src)
+              print('build number: INJECTED', bno)
+          else:
+              print('build number: LEAVING (count=%d)' % src.count("'__BUILD__'"))
           PYEOF
 
       - name: Create Android project
