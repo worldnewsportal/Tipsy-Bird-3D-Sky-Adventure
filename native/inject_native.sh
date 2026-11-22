@@ -179,6 +179,21 @@ DC=$(grep -c 'stat(' "$JAVA_DIR/UnityAdsPlugin.java")
 if [ "$DC" -lt 9 ]; then echo "FAIL: expected diagnostics on init/load/show/banner paths (stat calls=$DC)"; exit 1; fi
 echo "OK: ad diagnostics wired ($DC stat points)"
 
+echo "--- verifying persistent banner behavior ---"
+grep -q 'bannerRequested' src/index.html || { echo "FAIL: banner request deduplication missing from JavaScript"; exit 1; }
+grep -q 'p.showBanner' src/index.html || { echo "FAIL: persistent banner request missing from JavaScript"; exit 1; }
+if grep -q 'hideBanner' src/index.html; then echo "FAIL: game UI must not invoke hideBanner"; exit 1; fi
+grep -q 'onActivityResumed' "$JAVA_DIR/UnityAdsPlugin.java" || { echo "FAIL: banner lifecycle reattachment missing"; exit 1; }
+grep -q 'BANNER_RETRY_MS' "$JAVA_DIR/UnityAdsPlugin.java" || { echo "FAIL: banner retry policy missing"; exit 1; }
+python3 - "$JAVA_DIR/UnityAdsPlugin.java" <<'PYBANNER'
+import sys
+s = open(sys.argv[1], encoding="utf-8").read()
+body = s.split("public void hideBanner(PluginCall call)", 1)[1].split("\n    }\n}", 1)[0]
+if "bannerWanted = false" in body or "banner.destroy()" in body:
+    raise SystemExit("FAIL: legacy hideBanner must not disable or destroy the persistent banner")
+PYBANNER
+echo "OK: banner remains requested, deduplicated, lifecycle-aware, and not hideable"
+
 echo "--- verifying network permission ---"
 grep -q 'android.permission.ACCESS_NETWORK_STATE' "$M" || { echo "FAIL: ACCESS_NETWORK_STATE missing"; exit 1; }
 CH=$(grep -n 'setDefaultUncaughtExceptionHandler' "$MF" | head -1 | cut -d: -f1)

@@ -928,13 +928,13 @@ addEventListener('blur',pause);addEventListener('resize',resize);addEventListene
 /* ---------- Unity Ads bridge (rewarded only, user-initiated) ---------- */
 const AD_GIFT=15,AD_COOL=180000,AD_PLACE='Rewarded_Android',IN_PLACE='Interstitial_Android',BN_PLACE='Banner_Android',INT_EVERY=4,INT_COOL=120000;
 const AD20=20,AD50=50,AD20_COOL=90000,AD50_COOL=180000; // shop coin rewards: short ad (~30s) -> +20, double chained ad (~1min) -> +50
-const UA={P:null,ok:false,okIn:false,okBn:false,online:true,ready:false,nt:0,diag:{},
+const UA={P:null,ok:false,okIn:false,okBn:false,online:true,ready:false,nt:0,diag:{},bannerRequested:false,bannerPlugin:null,
  isOn(){try{return navigator.onLine!==false}catch(e){return true}},
  preload(){if(!this.ready||!this.online||!this.P||!this.P.preload)return;try{this.P.preload({type:'rewarded',placement:AD_PLACE});this.P.preload({type:'interstitial',placement:IN_PLACE})}catch(e){}},
  init(){try{const C=window.Capacitor;let pp=null;if(C&&C.getPlugin){try{pp=C.getPlugin('UnityAds')}catch(e){}}
-  this.P=pp||C&&C.Plugins&&C.Plugins.UnityAds||null;
+  this.P=pp||C&&C.Plugins&&C.Plugins.UnityAds||null;if(this.bannerPlugin!==this.P){this.bannerPlugin=this.P;this.bannerRequested=false}
   if(!this.P&&navigator.onLine!==false&&++this.nt<4){setTimeout(()=>{if(!UA.P)UA.init()},1200*(this.nt||1))}
-  this.online=this.isOn();this.ok=!!(this.P&&this.P.showRewarded);this.okIn=!!(this.P&&this.P.showInterstitial);this.okBn=!!(this.P&&(this.P.showBanner||this.P.hideBanner));
+  this.online=this.isOn();this.ok=!!(this.P&&this.P.showRewarded);this.okIn=!!(this.P&&this.P.showInterstitial);this.okBn=!!(this.P&&this.P.showBanner);
   if(this.P&&this.P.initialize&&this.online){try{Promise.resolve(this.P.initialize({gameId:window.UnityAdsGameId||'800443610',testMode:!!window.UnityAdsTestMode})).then(r=>{if(r&&r.failed){this.ready=false;setTimeout(()=>netRetry(),4000)}else{this.ft=0;this.ready=true;this.preload();umbn();adStatus()}}).catch(()=>{this.ready=false;setTimeout(()=>netRetry(),4000)})}catch(e){}}
   else if(this.P)this.ready=false;
   umbn();adStatus()}catch(e){this.ok=false}},
@@ -944,20 +944,22 @@ const UA={P:null,ok:false,okIn:false,okBn:false,online:true,ready:false,nt:0,dia
  showIn(pl,cb){if(!this.okIn||!this.ready||!this.isOn()){cb(false);return}
   let done=false;const fin=r=>{if(done)return;done=true;if(r&&r.shown)setTimeout(()=>this.preload(),1500);cb(!!(r&&r.shown),r)};const tm=setTimeout(()=>fin({failed:true}),60000);
   Promise.resolve(this.P.showInterstitial({placement:pl})).then(r=>{clearTimeout(tm);fin(r)}).catch(()=>{clearTimeout(tm);fin({failed:true})})}};
-/* Banner: always-on (top priority). Requested as soon as the native plugin
-   exists — independent of the ads-settings toggle and of network/ready state.
-   The native side queues pre-init requests and retries failed loads forever,
-   so nothing can permanently kill the banner. The reserved bottom strip
-   (html.bn → --bb:54px) stays as long as the banner engine is alive. */
-function umbn(){const want=!!(UA.P&&UA.okBn);
- try{document.documentElement.classList.toggle('bn',want)}catch(e){}
- if(want){try{UA.P.showBanner({placement:BN_PLACE,position:'bottom'})}catch(e){}}}
+/* A single native overlay stays above every game page. Page/state changes keep
+   the reserved bottom space but must not create duplicate native load requests. */
+function umbn(){const p=UA.P&&UA.okBn?UA.P:null;
+ try{document.documentElement.classList.toggle('bn',!!p)}catch(e){}
+ if(!p){UA.bannerRequested=false;UA.bannerPlugin=null;return}
+ if(UA.bannerPlugin!==p){UA.bannerPlugin=p;UA.bannerRequested=false}
+ if(UA.bannerRequested)return;
+ UA.bannerRequested=true;
+ try{Promise.resolve(p.showBanner({placement:BN_PLACE,position:'bottom'})).catch(()=>{if(UA.bannerPlugin===p){UA.bannerRequested=false;setTimeout(umbn,3000)}})}
+ catch(e){UA.bannerRequested=false;setTimeout(umbn,3000)}}
 UA.init();
 function adStatus(){const el=$('#adSt');if(!el)return;const on=UA.isOn();
  el.textContent=St.d.ads===false?(L==='en'?'Off (settings)':'معطّلة (الإعدادات)'):!UA.ok?(L==='en'?'Not linked — update app':'غير مرتبطة — حدِّث التطبيق'):!on?(L==='en'?'Offline — need internet':'غير متصل — الإعلانات بالإنترنت'):(UA.ready||!UA.P?T('مفعّلة ✓'):(L==='en'?'Connected ✓':'متصل — جاهزة ✓'));
  $('#bAdTest').style.display=St.d.ads!==false?'':'none';adDiag()}
 function adDiag(){const box=$('#adDiag');if(!box)return;const D=UA.diag||{};box.innerHTML='';let n=0;if(!D.Banner){const d0=document.createElement('div');d0.textContent='Banner: '+(UA.ready?'requested - waiting for fill':'waiting for SDK init (offline or Unity dashboard)');d0.dir='ltr';box.appendChild(d0);n++}
- if(String(D.Banner||'').indexOf('ready')<0){const t0=document.createElement('div');t0.dir='ltr';t0.style.opacity=.85;t0.textContent='Tip: Unity serves real ads only once the game is LIVE on Google Play \u2014 enable "Test ads" below for an instant test banner';box.appendChild(t0);n++}
+ if(String(D.Banner||'').indexOf('ready')<0){const t0=document.createElement('div');t0.dir='ltr';t0.style.opacity=.85;t0.textContent='Tip: check that Banner_Android is an active Unity banner placement. For verification, enable test mode in a test build only; no-fill means Unity has no ad available right now.';box.appendChild(t0);n++}
  [['init',L==='en'?'Initialization':'التهيئة'],['Rewarded',L==='en'?'Rewarded':'المكافآت'],['Interstitial',L==='en'?'Interstitial':'البينية'],['Banner',L==='en'?'Banner':'البانر']].forEach(x=>{const v=D[x[0]];if(!v)return;n++;const d=document.createElement('div');d.textContent=x[1]+': '+v;d.dir='ltr';box.appendChild(d)});
  box.style.display=n?'block':'none'}
 function crashBoxShow(){const box=$('#crashBox');if(!box)return;const items=[];

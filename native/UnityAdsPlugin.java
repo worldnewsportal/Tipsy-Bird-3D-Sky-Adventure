@@ -1,8 +1,12 @@
 package com.tipsybird.game;
 
+import android.app.Application;
 import android.app.Activity;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
+import android.view.View;
 import android.view.ViewGroup;
 import android.view.Gravity;
 import android.widget.FrameLayout;
@@ -29,10 +33,19 @@ public class UnityAdsPlugin extends Plugin {
     private boolean testMode = false;
     private BannerView banner;
     private int bannerTries = 0;
-    private boolean bannerWanted = false;
-    private boolean bannerReady = false;
-    private String bannerPlacement = "Banner_Android";
+    private volatile boolean bannerWanted = false;
+    private volatile boolean bannerReady = false;
+    private volatile boolean bannerLoading = false;
+    private volatile String bannerPlacement = "Banner_Android";
+    private long bannerLoadStartedAt = 0L;
+    private boolean lifecycleRegistered = false;
+    private static final long BANNER_RETRY_MS = 15000L;
+    private static final long BANNER_CHECK_INTERVAL_MS = 45000L;
+    private static final long BANNER_LOAD_TIMEOUT_MS = 45000L;
     private final Handler bannerHandler = new Handler(Looper.getMainLooper());
+    private final Runnable bannerRetryTask = new Runnable() {
+        @Override public void run() { attachBanner(); }
+    };
 
     private void ui(Runnable r) {
         if (bridge == null) return;
@@ -223,105 +236,207 @@ public class UnityAdsPlugin extends Plugin {
         });
     }
 
-    /* ---------------- Banner: never-give-up engine ----------------
-       Guarantees (owner requirement: banner shows on game entry, never dies):
-       - a request made before SDK init is QUEUED, never dropped
-       - load failures retry FOREVER every 10s (no try-N/3 cutoff)
-       - banner auto-shows right after SDK initialization completes  */
-
+    /* The banner is a single native overlay above the WebView, not part of any
+       game page. It stays requested through page changes and app backgrounding. */
     private void scheduleBannerRetry(long delayMs) {
         try {
-            bannerHandler.postDelayed(new Runnable() {
-                public void run() { attachBanner(); }
-            }, delayMs);
+            bannerHandler.removeCallbacks(bannerRetryTask);
+            bannerHandler.postDelayed(bannerRetryTask, Math.max(0L, delayMs));
         } catch (Exception ignored) { }
     }
 
-    /** Must run on the UI thread. Creates the banner view if missing and (re)loads.
-        Safe to call any number of times: skips work while a ready banner is live. */
+    private void registerBannerLifecycle() {
+        if (lifecycleRegistered) return;
+        try {
+            Application app = (Application) getContext().getApplicationContext();
+            app.registerActivityLifecycleCallbacks(new Application.ActivityLifecycleCallbacks() {
+                @Override public void onActivityCreated(Activity activity, Bundle state) { }
+                @Override public void onActivityStarted(Activity activity) { }
+                @Override public void onActivityResumed(Activity activity) {
+                    Activity current = bridge != null ? bridge.getActivity() : null;
+                    if (bannerWanted && activity == current) scheduleBannerRetry(800L);
+                }
+                @Override public void onActivityPaused(Activity activity) { }
+                @Override public void onActivityStopped(Activity activity) { }
+                @Override public void onActivitySaveInstanceState(Activity activity, Bundle state) { }
+                @Override public void onActivityDestroyed(Activity activity) { }
+            });
+            lifecycleRegistered = true;
+        } catch (Exception e) {
+            stat("Banner", "lifecycle monitor unavailable");
+        }
+    }
+
+    private void destroyBannerView() {
+        try {
+            if (banner != null) {
+                if (banner.getParent() instanceof ViewGroup) {
+                    ((ViewGroup) banner.getParent()).removeView(banner);
+                }
+                banner.destroy();
+            }
+        } catch (Exception ignored) { }
+        banner = null;
+        bannerReady = false;
+        bannerLoading = false;
+        bannerLoadStartedAt = 0L;
+    }
+
+    private void showBannerView(Activity activity, ViewGroup root) {
+        try {
+            if (banner == null || banner.getParent() != root) return;
+            banner.setVisibility(View.VISIBLE);
+            banner.setAlpha(1f);
+            banner.setElevation(8f * activity.getResources().getDisplayMetrics().density);
+            banner.bringToFront();
+            root.bringChildToFront(banner);
+            root.requestLayout();
+            root.invalidate();
+        } catch (Exception ignored) { }
+    }
+
+    /** Runs only on the UI thread. Reattach if Android recreated the activity,
+        keep the view above every game page, and retry no-fill/timeout responses. */
     private void attachBanner() {
         try {
             if (!bannerWanted) return;
-            final Activity a = bridge != null ? bridge.getActivity() : null;
-            if (a == null || a.isFinishing()) { scheduleBannerRetry(5000); return; }
-            if (!UnityAds.isInitialized()) {
-                stat("Banner", "waiting: SDK not initialized (queued, will auto-show)");
-                scheduleBannerRetry(5000);
+            final Activity activity = bridge != null ? bridge.getActivity() : null;
+            if (activity == null || activity.isFinishing()) {
+                scheduleBannerRetry(5000L);
                 return;
+            }
+            if (!UnityAds.isInitialized()) {
+                stat("Banner", "waiting: SDK not initialized; request queued");
+                scheduleBannerRetry(5000L);
+                return;
+            }
+            final ViewGroup root = activity.findViewById(android.R.id.content);
+            if (root == null) {
+                stat("Banner", "waiting: Android content view unavailable");
+                scheduleBannerRetry(3000L);
+                return;
+            }
+            if (banner != null && banner.getParent() != root) {
+                destroyBannerView();
+                stat("Banner", "reattaching after activity view change");
             }
             if (banner == null) {
                 bannerTries = 0;
-                bannerReady = false;
-                BannerView b = new BannerView(a, bannerPlacement, new UnityBannerSize(320, 50));
-                b.setListener(new BannerView.IListener() {
-                    @Override
-                    public void onBannerLoaded(BannerView bannerAdView) {
-                        bannerReady = true;
-                        stat("Banner", "ready");
+                BannerView view = new BannerView(activity, bannerPlacement, new UnityBannerSize(320, 50));
+                view.setVisibility(View.VISIBLE);
+                view.setListener(new BannerView.IListener() {
+                    @Override public void onBannerLoaded(final BannerView bannerAdView) {
+                        ui(new Runnable() {
+                            @Override public void run() {
+                                if (banner != bannerAdView) return;
+                                bannerLoading = false;
+                                bannerReady = true;
+                                bannerTries = 0;
+                                Activity current = bridge != null ? bridge.getActivity() : null;
+                                if (current != null) {
+                                    ViewGroup currentRoot = current.findViewById(android.R.id.content);
+                                    if (currentRoot != null) showBannerView(current, currentRoot);
+                                }
+                                stat("Banner", "ready");
+                                scheduleBannerRetry(BANNER_CHECK_INTERVAL_MS);
+                            }
+                        });
                     }
 
-                    @Override
-                    public void onBannerShown(BannerView bannerAdView) { stat("Banner", "visible"); }
-
-                    @Override
-                    public void onBannerClick(BannerView bannerAdView) { }
-
-                    @Override
-                    public void onBannerFailedToLoad(BannerView bannerAdView, BannerErrorInfo errorInfo) {
-                        // NEVER give up: schedule the next load attempt in 10s, forever.
-                        bannerReady = false;
-                        try {
-                            stat("Banner", "load failed (retry " + (++bannerTries) + " in 10s): "
-                                    + (errorInfo != null && errorInfo.errorMessage != null
-                                        ? errorInfo.errorMessage : "unknown"));
-                        } catch (Exception ignored2) { }
-                        scheduleBannerRetry(10000);
+                    @Override public void onBannerShown(final BannerView bannerAdView) {
+                        ui(new Runnable() {
+                            @Override public void run() {
+                                if (banner != bannerAdView) return;
+                                bannerLoading = false;
+                                bannerReady = true;
+                                Activity current = bridge != null ? bridge.getActivity() : null;
+                                if (current != null) {
+                                    ViewGroup currentRoot = current.findViewById(android.R.id.content);
+                                    if (currentRoot != null) showBannerView(current, currentRoot);
+                                }
+                                stat("Banner", "visible");
+                                scheduleBannerRetry(BANNER_CHECK_INTERVAL_MS);
+                            }
+                        });
                     }
 
-                    @Override
-                    public void onBannerLeftApplication(BannerView bannerAdView) { }
+                    @Override public void onBannerClick(BannerView bannerAdView) { }
+
+                    @Override public void onBannerFailedToLoad(final BannerView bannerAdView,
+                                                                final BannerErrorInfo errorInfo) {
+                        ui(new Runnable() {
+                            @Override public void run() {
+                                if (banner != bannerAdView) return;
+                                bannerLoading = false;
+                                bannerReady = false;
+                                String message = errorInfo != null && errorInfo.errorMessage != null
+                                        ? errorInfo.errorMessage : "unknown";
+                                stat("Banner", "load failed (retry " + (++bannerTries) + "): " + message);
+                                scheduleBannerRetry(BANNER_RETRY_MS);
+                            }
+                        });
+                    }
+
+                    @Override public void onBannerLeftApplication(BannerView bannerAdView) { }
                 });
-                banner = b;
-                ViewGroup root = a.findViewById(android.R.id.content);
-                root.addView(b, new FrameLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT,
+                banner = view;
+                root.addView(view, new FrameLayout.LayoutParams(
+                        ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT,
                         Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL));
                 stat("Banner", "created " + bannerPlacement);
             }
-            if (!bannerReady) {
-                try { banner.load(new UnityAdsLoadOptions()); }
-                catch (Exception e) { scheduleBannerRetry(10000); }
+
+            showBannerView(activity, root);
+            long now = SystemClock.elapsedRealtime();
+            if (bannerLoading && now - bannerLoadStartedAt >= BANNER_LOAD_TIMEOUT_MS) {
+                bannerLoading = false;
+                bannerReady = false;
+                stat("Banner", "load timed out; retrying");
             }
+            if (!bannerReady && !bannerLoading) {
+                bannerLoading = true;
+                bannerLoadStartedAt = now;
+                try {
+                    banner.load(new UnityAdsLoadOptions());
+                    stat("Banner", "load requested");
+                } catch (Exception e) {
+                    bannerLoading = false;
+                    stat("Banner", "load call failed; retrying");
+                    scheduleBannerRetry(BANNER_RETRY_MS);
+                    return;
+                }
+            }
+            scheduleBannerRetry(BANNER_CHECK_INTERVAL_MS);
         } catch (Exception e) {
-            scheduleBannerRetry(10000);
+            stat("Banner", "attach failed; retrying");
+            scheduleBannerRetry(BANNER_RETRY_MS);
         }
     }
 
     @PluginMethod
-    public void showBanner(PluginCall call) {
-        final String pl = call.getString("placement", "Banner_Android");
+    public void showBanner(final PluginCall call) {
+        final String placement = call.getString("placement", "Banner_Android");
         bannerWanted = true;
-        bannerPlacement = pl;
+        bannerPlacement = placement;
         call.resolve();
-        if (!UnityAds.isInitialized()) {
-            stat("Banner", "queued: will show as soon as SDK initializes");
-            scheduleBannerRetry(3000);
-            return;
-        }
-        ui(new Runnable() { public void run() { attachBanner(); } });
+        ui(new Runnable() {
+            @Override public void run() {
+                registerBannerLifecycle();
+                attachBanner();
+            }
+        });
     }
 
     @PluginMethod
     public void hideBanner(PluginCall call) {
-        bannerWanted = false;
+        // Kept as a compatibility no-op: this app's banner is persistent.
+        bannerWanted = true;
+        call.resolve();
         ui(new Runnable() {
-            public void run() {
-                try {
-                    if (banner != null) { banner.destroy(); banner = null; }
-                    bannerReady = false;
-                } catch (Exception e) { }
+            @Override public void run() {
+                registerBannerLifecycle();
+                attachBanner();
             }
         });
-        call.resolve();
     }
 }
