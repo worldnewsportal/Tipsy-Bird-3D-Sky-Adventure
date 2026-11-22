@@ -34,7 +34,7 @@
 - يُخزَّن في `SharedPreferences` المحلية فقط، ولا يُرسل إلا إلى api.github.com.
 
 ## المعمارية التقنية
-- **بناء**: `.github/workflows/devtool.yml` → aapt2 compile/link → javac (JDK17) → d8 (`--min-api 23`) → zipalign → apksigner (مفتاح من GitHub Secrets؛ مفتاح مؤقت إن لم تُضبط الـ secrets).
+- **بناء**: `.github/workflows/devtool.yml` → aapt2 compile/link → javac (JDK17) → d8 (`--min-api 23`) → zipalign → apksigner (`tools/release.p12`, alias `tipsy`).
 - **واجهة**: LinearLayout برمجي بالكامل — Shell واحد (رأس متدرج + زر رجوع + ScrollView) و`show(page)` يبني الصفحة كل ضغطة (فتح = تحديث بيانات حي).
 - **شبكة**: `httpGet`/`httpPost` مع `User-Agent: tipsy-devtool` (بدونه يرفض GitHub API) — خيوط خلفية daemon + `runOnUiThread`.
 - **dispatch**: `POST /repos/{owner}/{repo}/actions/workflows/{file}/dispatches` مع `{"ref":"vibe/fully-offline-c73d38"}` — الرمز 204 نجاح.
