@@ -213,7 +213,21 @@ if 'banner.load(' not in body:
     raise SystemExit("FAIL: banner refresh must load a new creative into the SAME view")
 if 'BANNER_REFRESH_MS' not in body:
     raise SystemExit("FAIL: banner refresh must honour BANNER_REFRESH_MS")
+if 'bannerLoadStartedAt = now' not in body:
+    raise SystemExit("FAIL: a refresh must refresh the load timestamp, otherwise the load timeout can fire on it")
 PYREFRESH
+python3 - "$JAVA_DIR/UnityAdsPlugin.java" <<'PYNOBLANK'
+import sys, re
+s = open(sys.argv[1], encoding="utf-8").read()
+m = re.search(r'public void onBannerFailedToLoad\(.*?\n    \}\n', s, re.S)
+if not m:
+    raise SystemExit("FAIL: onBannerFailedToLoad() not found")
+body = m.group(0)
+if 'bannerRefreshing' not in body:
+    raise SystemExit("FAIL: a failed content swap must not clear the displayed creative (banner would go blank)")
+if body.index('bannerRefreshing') > body.index('bannerReady = false'):
+    raise SystemExit("FAIL: the refresh guard must run BEFORE bannerReady is cleared")
+PYNOBLANK
 echo "OK: banner swaps its creative every 40s in place, without leaving the screen"
 
 echo "--- verifying network permission ---"

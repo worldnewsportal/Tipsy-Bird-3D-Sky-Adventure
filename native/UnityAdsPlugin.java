@@ -36,6 +36,9 @@ public class UnityAdsPlugin extends Plugin {
     private volatile boolean bannerWanted = false;
     private volatile boolean bannerReady = false;
     private volatile boolean bannerLoading = false;
+    /** True while a *content swap* is in flight. A failed swap must never
+        clear the displayed creative, otherwise the banner would go blank. */
+    private volatile boolean bannerRefreshing = false;
     private volatile String bannerPlacement = "Banner_Android";
     private long bannerLoadStartedAt = 0L;
     private boolean lifecycleRegistered = false;
@@ -277,17 +280,25 @@ public class UnityAdsPlugin extends Plugin {
                 scheduleBannerRefresh(BANNER_REFRESH_MS);
                 return;
             }
+            if (bannerLoading) {
+                // Another load is still running — do not stack requests.
+                scheduleBannerRefresh(BANNER_REFRESH_MS);
+                return;
+            }
             long now = SystemClock.elapsedRealtime();
             long elapsed = now - bannerLastLoadedAt;
             if (elapsed < BANNER_REFRESH_MS) {
                 scheduleBannerRefresh(BANNER_REFRESH_MS - elapsed);
                 return;
             }
+            bannerRefreshing = true;
             bannerLoading = true;
+            bannerLoadStartedAt = now;
             banner.load(new UnityAdsLoadOptions());
             stat("Banner", "refresh requested");
         } catch (Exception e) {
             bannerLoading = false;
+            bannerRefreshing = false;
             stat("Banner", "refresh call failed; keeping current creative");
         }
         scheduleBannerRefresh(BANNER_REFRESH_MS);
@@ -332,6 +343,7 @@ public class UnityAdsPlugin extends Plugin {
         banner = null;
         bannerReady = false;
         bannerLoading = false;
+        bannerRefreshing = false;
         bannerLoadStartedAt = 0L;
         bannerLastLoadedAt = 0L;
     }
@@ -384,6 +396,7 @@ public class UnityAdsPlugin extends Plugin {
                             @Override public void run() {
                                 if (banner != bannerAdView) return;
                                 bannerLoading = false;
+                                bannerRefreshing = false;
                                 bannerReady = true;
                                 bannerTries = 0;
                                 bannerLastLoadedAt = SystemClock.elapsedRealtime();
@@ -422,6 +435,17 @@ public class UnityAdsPlugin extends Plugin {
                         ui(new Runnable() {
                             @Override public void run() {
                                 if (banner != bannerAdView) return;
+                                if (bannerRefreshing) {
+                                    // A content swap failed (no fill, most likely).
+                                    // The creative that is already on screen stays
+                                    // there — the banner must never go blank — and
+                                    // we try the swap again shortly.
+                                    bannerRefreshing = false;
+                                    bannerLoading = false;
+                                    stat("Banner", "refresh failed; keeping current creative");
+                                    scheduleBannerRefresh(BANNER_RETRY_MS);
+                                    return;
+                                }
                                 bannerLoading = false;
                                 bannerReady = false;
                                 String message = errorInfo != null && errorInfo.errorMessage != null
@@ -445,8 +469,16 @@ public class UnityAdsPlugin extends Plugin {
             long now = SystemClock.elapsedRealtime();
             if (bannerLoading && now - bannerLoadStartedAt >= BANNER_LOAD_TIMEOUT_MS) {
                 bannerLoading = false;
-                bannerReady = false;
-                stat("Banner", "load timed out; retrying");
+                if (bannerRefreshing) {
+                    // The swap timed out. The previous creative is still on screen,
+                    // so keep it and retry the swap instead of blanking the banner.
+                    bannerRefreshing = false;
+                    stat("Banner", "refresh timed out; keeping current creative");
+                    scheduleBannerRefresh(BANNER_RETRY_MS);
+                } else {
+                    bannerReady = false;
+                    stat("Banner", "load timed out; retrying");
+                }
             }
             if (!bannerReady && !bannerLoading) {
                 bannerLoading = true;
