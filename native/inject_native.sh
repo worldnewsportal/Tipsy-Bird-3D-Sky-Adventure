@@ -194,6 +194,28 @@ if "bannerWanted = false" in body or "banner.destroy()" in body:
 PYBANNER
 echo "OK: banner remains requested, deduplicated, lifecycle-aware, and not hideable"
 
+echo "--- verifying banner content refresh (40s creative swap) ---"
+grep -q 'BANNER_REFRESH_MS = 40000L' "$JAVA_DIR/UnityAdsPlugin.java" || { echo "FAIL: banner refresh interval must match the Unity dashboard refresh limit (40s)"; exit 1; }
+grep -q 'bannerRefreshTask' "$JAVA_DIR/UnityAdsPlugin.java" || { echo "FAIL: banner refresh task missing from native plugin"; exit 1; }
+grep -q 'refreshBannerContent' "$JAVA_DIR/UnityAdsPlugin.java" || { echo "FAIL: banner content swap routine missing from native plugin"; exit 1; }
+grep -q 'bannerLastLoadedAt' "$JAVA_DIR/UnityAdsPlugin.java" || { echo "FAIL: banner refresh must be timed from the last loaded creative"; exit 1; }
+python3 - "$JAVA_DIR/UnityAdsPlugin.java" <<'PYREFRESH'
+import sys, re
+s = open(sys.argv[1], encoding="utf-8").read()
+m = re.search(r'private void refreshBannerContent\(\)\s*\{(.*?)\n    \}', s, re.S)
+if not m:
+    raise SystemExit("FAIL: refreshBannerContent() body not found")
+body = m.group(1)
+for forbidden in ('destroy(', 'removeView', 'bannerWanted = false'):
+    if forbidden in body:
+        raise SystemExit("FAIL: banner refresh must never hide/detach the banner (found %r)" % forbidden)
+if 'banner.load(' not in body:
+    raise SystemExit("FAIL: banner refresh must load a new creative into the SAME view")
+if 'BANNER_REFRESH_MS' not in body:
+    raise SystemExit("FAIL: banner refresh must honour BANNER_REFRESH_MS")
+PYREFRESH
+echo "OK: banner swaps its creative every 40s in place, without leaving the screen"
+
 echo "--- verifying network permission ---"
 grep -q 'android.permission.ACCESS_NETWORK_STATE' "$M" || { echo "FAIL: ACCESS_NETWORK_STATE missing"; exit 1; }
 CH=$(grep -n 'setDefaultUncaughtExceptionHandler' "$MF" | head -1 | cut -d: -f1)

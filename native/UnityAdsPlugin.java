@@ -42,9 +42,20 @@ public class UnityAdsPlugin extends Plugin {
     private static final long BANNER_RETRY_MS = 15000L;
     private static final long BANNER_CHECK_INTERVAL_MS = 45000L;
     private static final long BANNER_LOAD_TIMEOUT_MS = 45000L;
+    /** Content-swap interval for the banner, in milliseconds. It matches the
+        refresh limit configured for the placement in the Unity dashboard
+        (Banner_Android -> 40s), so the client never asks Unity faster than
+        the server allows. The banner view is never detached or destroyed:
+        only the creative inside it is replaced. */
+    private static final long BANNER_REFRESH_MS = 40000L;
+    /** elapsedRealtime of the last successful banner load (initial or refresh). */
+    private long bannerLastLoadedAt = 0L;
     private final Handler bannerHandler = new Handler(Looper.getMainLooper());
     private final Runnable bannerRetryTask = new Runnable() {
         @Override public void run() { attachBanner(); }
+    };
+    private final Runnable bannerRefreshTask = new Runnable() {
+        @Override public void run() { refreshBannerContent(); }
     };
 
     private void ui(Runnable r) {
@@ -245,6 +256,43 @@ public class UnityAdsPlugin extends Plugin {
         } catch (Exception ignored) { }
     }
 
+    /** Schedules the banner content swap. bannerHandler runs on the main looper,
+        so the task always executes on the UI thread. */
+    private void scheduleBannerRefresh(long delayMs) {
+        try {
+            bannerHandler.removeCallbacks(bannerRefreshTask);
+            bannerHandler.postDelayed(bannerRefreshTask, Math.max(1000L, delayMs));
+        } catch (Exception ignored) { }
+    }
+
+    /** Swaps in a new banner creative on the SAME view.
+        The view is never removed from the window and never destroyed, so the
+        banner keeps its place on screen and only its content changes (a new
+        game/app creative). This mirrors the SDK's own banner refresh, which
+        also re-loads into the existing view instead of rebuilding it. */
+    private void refreshBannerContent() {
+        try {
+            if (!bannerWanted || banner == null || !bannerReady) {
+                // No live creative to swap: the load/retry path owns this case.
+                scheduleBannerRefresh(BANNER_REFRESH_MS);
+                return;
+            }
+            long now = SystemClock.elapsedRealtime();
+            long elapsed = now - bannerLastLoadedAt;
+            if (elapsed < BANNER_REFRESH_MS) {
+                scheduleBannerRefresh(BANNER_REFRESH_MS - elapsed);
+                return;
+            }
+            bannerLoading = true;
+            banner.load(new UnityAdsLoadOptions());
+            stat("Banner", "refresh requested");
+        } catch (Exception e) {
+            bannerLoading = false;
+            stat("Banner", "refresh call failed; keeping current creative");
+        }
+        scheduleBannerRefresh(BANNER_REFRESH_MS);
+    }
+
     private void registerBannerLifecycle() {
         if (lifecycleRegistered) return;
         try {
@@ -254,7 +302,12 @@ public class UnityAdsPlugin extends Plugin {
                 @Override public void onActivityStarted(Activity activity) { }
                 @Override public void onActivityResumed(Activity activity) {
                     Activity current = bridge != null ? bridge.getActivity() : null;
-                    if (bannerWanted && activity == current) scheduleBannerRetry(800L);
+                    if (bannerWanted && activity == current) {
+                        // Restart the content-swap cycle from the resume moment.
+                        bannerLastLoadedAt = SystemClock.elapsedRealtime();
+                        scheduleBannerRefresh(BANNER_REFRESH_MS);
+                        scheduleBannerRetry(800L);
+                    }
                 }
                 @Override public void onActivityPaused(Activity activity) { }
                 @Override public void onActivityStopped(Activity activity) { }
@@ -280,6 +333,7 @@ public class UnityAdsPlugin extends Plugin {
         bannerReady = false;
         bannerLoading = false;
         bannerLoadStartedAt = 0L;
+        bannerLastLoadedAt = 0L;
     }
 
     private void showBannerView(Activity activity, ViewGroup root) {
@@ -332,6 +386,7 @@ public class UnityAdsPlugin extends Plugin {
                                 bannerLoading = false;
                                 bannerReady = true;
                                 bannerTries = 0;
+                                bannerLastLoadedAt = SystemClock.elapsedRealtime();
                                 Activity current = bridge != null ? bridge.getActivity() : null;
                                 if (current != null) {
                                     ViewGroup currentRoot = current.findViewById(android.R.id.content);
@@ -399,6 +454,7 @@ public class UnityAdsPlugin extends Plugin {
                 try {
                     banner.load(new UnityAdsLoadOptions());
                     stat("Banner", "load requested");
+                    scheduleBannerRefresh(BANNER_REFRESH_MS);
                 } catch (Exception e) {
                     bannerLoading = false;
                     stat("Banner", "load call failed; retrying");
