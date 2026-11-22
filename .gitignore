@@ -5,3 +5,9 @@ android/
 .DS_Store
 -e 
 package-lock.json
+
+# never commit signing keys or site-verification files
+tools/*.p12
+tools/*.jks
+tools/*.keystore
+google*.html

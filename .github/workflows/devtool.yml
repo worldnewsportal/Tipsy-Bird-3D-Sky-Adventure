@@ -58,8 +58,10 @@ jobs:
           if [ -n "$KEYSTORE_BASE64" ]; then
             echo "$KEYSTORE_BASE64" | base64 -d > release.jks
           else
-            cp tools/release.p12 release.jks
-            KS_PASS=${KS_PASS:-tipsybird2026}; KEY_ALIAS=${KEY_ALIAS:-tipsy}
+            echo "No keystore secret found: creating a temporary one (add secrets to keep the same signature between builds)"
+            KS_PASS=tipsydev123; KEY_ALIAS=tipsydev
+            keytool -genkeypair -keystore release.jks -alias $KEY_ALIAS -keyalg RSA -keysize 2048 -validity 10000 \
+              -storepass $KS_PASS -keypass $KS_PASS -dname "CN=Tipsy DevTools, O=Tipsy, C=US"
           fi
           export KS_PASS
           $BT/apksigner sign --ks release.jks --ks-key-alias $KEY_ALIAS --ks-pass env:KS_PASS --out TipsyBirdDevTools.apk /tmp/stage/aligned.apk
