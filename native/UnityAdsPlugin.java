@@ -40,6 +40,7 @@ public class UnityAdsPlugin extends Plugin {
         clear the displayed creative, otherwise the banner would go blank. */
     private volatile boolean bannerRefreshing = false;
     private volatile String bannerPlacement = "Banner_Android";
+    private volatile String activeBannerPlacement = "";
     private long bannerLoadStartedAt = 0L;
     private boolean lifecycleRegistered = false;
     private static final long BANNER_RETRY_MS = 15000L;
@@ -386,6 +387,13 @@ public class UnityAdsPlugin extends Plugin {
                 destroyBannerView();
                 stat("Banner", "reattaching after activity view change");
             }
+            // A placement is immutable for a BannerView. Recreate it safely if
+            // a caller changes the placement instead of silently continuing to
+            // request the old placement.
+            if (banner != null && !bannerPlacement.equals(activeBannerPlacement)) {
+                destroyBannerView();
+                stat("Banner", "recreating for placement " + bannerPlacement);
+            }
             if (banner == null) {
                 bannerTries = 0;
                 BannerView view = new BannerView(activity, bannerPlacement, new UnityBannerSize(320, 50));
@@ -459,6 +467,7 @@ public class UnityAdsPlugin extends Plugin {
                     @Override public void onBannerLeftApplication(BannerView bannerAdView) { }
                 });
                 banner = view;
+                activeBannerPlacement = bannerPlacement;
                 root.addView(view, new FrameLayout.LayoutParams(
                         ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT,
                         Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL));
@@ -505,7 +514,8 @@ public class UnityAdsPlugin extends Plugin {
     public void showBanner(final PluginCall call) {
         final String placement = call.getString("placement", "Banner_Android");
         bannerWanted = true;
-        bannerPlacement = placement;
+        bannerPlacement = placement == null || placement.trim().isEmpty()
+                ? "Banner_Android" : placement.trim();
         call.resolve();
         ui(new Runnable() {
             @Override public void run() {

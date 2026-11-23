@@ -5,3 +5,9 @@ android/
 .DS_Store
 -e 
 package-lock.json
+# Android signing material must never be committed.
+*.p12
+*.jks
+*.keystore
+*.pem
+release.jks

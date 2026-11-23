@@ -4,6 +4,12 @@ on:
   push:
     branches: [main, master, vibe/fully-offline-c73d38]
   workflow_dispatch:
+    inputs:
+      ads_test_mode:
+        description: 'Internal diagnosis only: enable Unity test ads (never use for Play release)'
+        required: true
+        type: boolean
+        default: false
 
 concurrency:
   group: android-${{ github.ref }}
@@ -46,6 +52,7 @@ jobs:
           FB_API: ${{ secrets.FIREBASE_WEB_API_KEY }}
           FB_URL: ${{ secrets.FIREBASE_DB_URL }}
           BUILD_NO: ${{ github.run_number }}
+          ADS_TEST_MODE: ${{ inputs.ads_test_mode || 'false' }}
         run: |
           python3 - <<'PYEOF'
           import json, os
@@ -76,6 +83,14 @@ jobs:
               print('build number: INJECTED', bno)
           else:
               print('build number: LEAVING (count=%d)' % src.count("'__BUILD__'"))
+          test_mode = (os.environ.get('ADS_TEST_MODE') or 'false').lower() == 'true'
+          if test_mode:
+              if 'window.UnityAdsTestMode=true' not in src:
+                  src = src.replace('</head>', '<script>window.UnityAdsTestMode=true;</script></head>', 1)
+                  open('www/index.html', 'w', encoding='utf-8').write(src)
+              print('WARNING: Unity test ads enabled for this manually requested diagnostic build only')
+          else:
+              print('Unity test ads: disabled (production mode)')
           PYEOF
 
       - name: Create Android project
@@ -119,18 +134,13 @@ jobs:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
         run: |
           BT=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -1)
-          if [ -n "$KEYSTORE_BASE64" ]; then
-            echo "$KEYSTORE_BASE64" | base64 -d > release.jks
-          elif [ -f tools/release.p12 ]; then
-            echo "Using the committed signing key (tools/release.p12) — same signature on every build"
-            cp tools/release.p12 release.jks
-            KS_PASS=${KS_PASS:-tipsybird2026}; KEY_ALIAS=${KEY_ALIAS:-tipsy}
-          else
-            echo "No keystore secret found: creating a temporary one (add secrets to keep the same signature between builds)"
-            KS_PASS=tipsybird123; KEY_ALIAS=tipsy
-            keytool -genkeypair -keystore release.jks -alias $KEY_ALIAS -keyalg RSA -keysize 2048 -validity 10000 \
-              -storepass $KS_PASS -keypass $KS_PASS -dname "CN=Tipsy Bird, O=Tipsy, C=US"
+          if [ -z "$KEYSTORE_BASE64" ] || [ -z "$KS_PASS" ] || [ -z "$KEY_ALIAS" ]; then
+            echo 'ERROR: KEYSTORE_BASE64, KEYSTORE_PASSWORD and KEY_ALIAS GitHub Secrets are required.'
+            echo 'Refusing to publish an APK signed by a public or temporary key.'
+            exit 1
           fi
+          echo "$KEYSTORE_BASE64" | base64 --decode > release.jks
+          test -s release.jks || { echo 'ERROR: decoded keystore is empty'; exit 1; }
           IN=android/app/build/outputs/apk/release/app-release-unsigned.apk
           $BT/zipalign -p -f 4 $IN aligned.apk
           export KS_PASS
