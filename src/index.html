@@ -329,7 +329,7 @@ const T=s=>L==='en'&&EN[s]||s;
 function lvlTxt(){const f=DF[St.d.diff];$('#lvl').textContent=T('السرعة')+' ×'+(Math.min(f.sm,f.s0+score*f.ac)/4).toFixed(1)}
 function applyLang(){const h=document.documentElement;h.lang=L;h.dir=L==='ar'?'rtl':'ltr';document.title=L==='ar'?'الطائر الطائش 3D':'Tipsy Bird 3D';
  const w=document.createTreeWalker($('#ui'),NodeFilter.SHOW_TEXT);let n;while(n=w.nextNode()){if(n._o==null)n._o=n.nodeValue;const m=n._o.match(/^(\s*)([\s\S]*?)(\s*)$/);if(m[2]&&EN[m[2]]!==undefined)n.nodeValue=m[1]+(L==='en'?EN[m[2]]:m[2])+m[3]}
- $('#bLang').innerHTML=IC('globe')+(L==='en'?'العربية':'English');lvlTxt();adStatus();mapsBtn();renderMaps()}
+ $('#bLang').innerHTML=IC('globe')+(L==='en'?'العربية':'English');lvlTxt();adStatus();mapsBtn();renderMaps();try{cloudStatus();if($('#s-set')?.classList.contains('on'))renderGameInfo()}catch(_e){}}
 /* ---------- audio (procedural) ---------- */
 
 const Au={c:null,tm:null,nx:0,st:0,
@@ -793,7 +793,7 @@ function visual(dt){
 let fa=0,fn=0,fc=0,fq=0;
 function frame(ms){requestAnimationFrame(frame);const now=ms/1000;if(last==null)last=now;const dt=Math.min(.1,now-last);last=now;
  if(state!==S.LOADING&&state!==S.PAUSED){let sdt=dt;if(stopT>0){stopT-=dt;sdt=0}else if(slowmo>0){slowmo-=dt;sdt=dt*.32}acc+=sdt;while(acc>=1/120){step(1/120);acc-=1/120}
-  fa+=dt;fn++;if(fa>3){if(fn/fa<30&&(St.d.gq|0)>0&&state>=S.READY&&!(St.d.lockRes&&(St.d.gq|0)===2)){if((St.d.gq|0)===2){if(UPR>1.45){UPR=UPR>2.5?2.5:UPR>2?2:UPR>1.7?1.7:1.4;quality();sync();toast(L==='en'?'Optimized for smoothness':'تم تحسين السلاسة تلقائيًا')}else{St.d.gq=1;UPR=1.75;St.save();quality();sync();toast(L==='en'?'Graphics lowered automatically to keep it smooth':'تم تخفيض الجرافيكس تلقائيًا للحفاظ على السلاسة')}}else{St.d.gq=(St.d.gq|0)-1;St.save();quality();sync();toast(L==='en'?'Graphics lowered automatically to keep it smooth':'تم تخفيض الجرافيكس تلقائيًا للحفاظ على السلاسة')}}fa=fn=0}}else acc=0;
+  fa+=dt;fn++;if(fa>3){if(fn/fa<30&&(St.d.gq|0)>0&&state>=S.READY&&!(St.d.lockRes&&(St.d.gq|0)===2)){if((St.d.gq|0)===2){if(UPR>1.45){UPR=UPR>2.5?2.5:UPR>2?2:UPR>1.7?1.7:1.4;quality();sync();toast(L==='en'?'Optimized for smoothness':'تم تحسين السلاسة تلقائيًا')}else{St.d.gq=1;UPR=1.75;St.save();quality();sync();toast(L==='en'?'Graphics lowered automatically to keep it smooth':'تم تخفيض الرسوم تلقائيًا للحفاظ على السلاسة')}}else{St.d.gq=(St.d.gq|0)-1;St.save();quality();sync();toast(L==='en'?'Graphics lowered automatically to keep it smooth':'تم تخفيض الرسوم تلقائيًا للحفاظ على السلاسة')}}fa=fn=0}}else acc=0;
  fc++;fq+=dt;if(fq>.5){if(St.d.fps)$('#fps').textContent=Math.round(fc/fq)+' FPS';fc=0;fq=0}
  visual(dt);R.render(sc,cam)}
 /* ---------- quality / resize ---------- */
