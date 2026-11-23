@@ -3,6 +3,7 @@
 اللعبة تعمل 100% دون إنترنت: محرك Three.js والخطوط مضمّنة في `src/vendor/`.
 
 - دليل ربط Unity Ads (إعلانات مكافآت اختيارية): `docs/UNITY_ADS.md`
+- العناصر الأسطورية وتمائم الجولة (عشر + عشر بإعلان دقيقة): `docs/LEGENDARY-CHARMS.md`
 - قائمة جاهزية Google Play: `docs/PLAY_STORE.md`
 
 1. Create a new GitHub repository and upload ALL files of this folder (keep `.github/workflows/android.yml`).

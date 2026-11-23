@@ -236,3 +236,33 @@ CH=$(grep -n 'setDefaultUncaughtExceptionHandler' "$MF" | head -1 | cut -d: -f1)
 if [ -z "$CH" ] || [ "$CH" -gt "$SC" ]; then echo "FAIL: crash handler must be installed before super.onCreate"; exit 1; fi
 grep -q 'crash.log' "$MF" || { echo "FAIL: crash log path missing"; exit 1; }
 echo "OK: crash reporter installed"
+
+echo "--- verifying legendary drops + run charms (shop feature) ---"
+python3 - src/index.html <<'PYSHOP'
+import sys, re
+s = open(sys.argv[1], encoding="utf-8").read()
+def fail(m): raise SystemExit("FAIL: " + m)
+m = re.search(r"const LEG=\[(.*?)\n\];", s, re.S)
+if not m: fail("LEG table (legendary drops) missing from the game source")
+leg = re.findall(r"k:'(lg[A-Za-z]+)'", m.group(1))
+if len(leg) != 10: fail("expected 10 legendary drops, found %d" % len(leg))
+if len(set(leg)) != 10: fail("legendary drop keys must be unique")
+m2 = re.search(r"const CHM=\[(.*?)\n\];", s, re.S)
+if not m2: fail("CHM table (run charms) missing from the game source")
+chm = re.findall(r"k:'(cm[A-Za-z]+)'", m2.group(1))
+if len(chm) != 10: fail("expected 10 charms, found %d" % len(chm))
+if len(set(chm)) != 10: fail("charm keys must be unique")
+for fx in re.findall(r"fx:'(\w+)'", m2.group(1)):
+    if "a==='%s'" % fx not in s: fail("charm effect %r has no applyB() branch" % fx)
+for key in leg + chm:
+    if "n:'" not in m.group(1) + m2.group(1): fail("missing arabic names")
+if "'ci','sh','ky','cm'" not in s: fail("the pipe pool must build the charm pickup mesh")
+if "collectCharm(" not in s: fail("charms must be collected automatically in the world")
+if "charmSpawnKey()" not in s: fail("charms must spawn randomly in the world")
+if "startLegendAd(" not in s or "startCharmAd(" not in s: fail("the 1-minute ad unlock paths are missing")
+if "showCoinAds(2,AD50" not in s: fail("legendary/charms must be unlocked through the full 1-minute ad")
+if "St.d.leg" not in s or "St.d.chm" not in s: fail("save fields for legendary/charms are missing")
+if "d.leg" not in s or "d.chm" not in s: fail("save sanitization for legendary/charms is missing")
+print("OK: %d legendary drops + %d charms wired to the 1-minute ad" % (len(leg), len(chm)))
+PYSHOP
+echo "OK: legendary drops and run charms present and ad-gated"
