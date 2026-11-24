@@ -468,9 +468,11 @@ public class UnityAdsPlugin extends Plugin {
                 });
                 banner = view;
                 activeBannerPlacement = bannerPlacement;
-                root.addView(view, new FrameLayout.LayoutParams(
-                        ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT,
-                        Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL));
+                int density = Math.max(1, Math.round(activity.getResources().getDisplayMetrics().density));
+                FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
+                        320 * density, 50 * density,
+                        Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
+                root.addView(view, lp);
                 stat("Banner", "created " + bannerPlacement);
             }
 
@@ -493,7 +495,9 @@ public class UnityAdsPlugin extends Plugin {
                 bannerLoading = true;
                 bannerLoadStartedAt = now;
                 try {
-                    banner.load(new UnityAdsLoadOptions());
+                    // Unity's banner API uses load() for BannerView. The
+                    // UnityAdsLoadOptions overload belongs to other ad paths.
+                    banner.load();
                     stat("Banner", "load requested");
                     scheduleBannerRefresh(BANNER_REFRESH_MS);
                 } catch (Exception e) {

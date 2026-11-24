@@ -992,7 +992,7 @@ const UA={P:null,ok:false,okIn:false,okBn:false,online:true,ready:false,nt:0,dia
   this.P=pp||C&&C.Plugins&&C.Plugins.UnityAds||null;if(this.bannerPlugin!==this.P){this.bannerPlugin=this.P;this.bannerRequested=false}
   if(!this.P&&navigator.onLine!==false&&++this.nt<4){setTimeout(()=>{if(!UA.P)UA.init()},1200*(this.nt||1))}
   this.online=this.isOn();this.ok=!!(this.P&&this.P.showRewarded);this.okIn=!!(this.P&&this.P.showInterstitial);this.okBn=!!(this.P&&this.P.showBanner);
-  if(this.P&&this.P.initialize&&this.online){try{Promise.resolve(this.P.initialize({gameId:window.UnityAdsGameId||'800443610',testMode:!!window.UnityAdsTestMode})).then(r=>{if(r&&r.failed){this.ready=false;setTimeout(()=>netRetry(),4000)}else{this.ft=0;this.ready=true;this.preload();umbn();adStatus()}}).catch(()=>{this.ready=false;setTimeout(()=>netRetry(),4000)})}catch(e){}}
+  if(this.P&&this.P.initialize){try{Promise.resolve(this.P.initialize({gameId:window.UnityAdsGameId||'800443610',testMode:!!window.UnityAdsTestMode})).then(r=>{if(r&&r.failed){this.ready=false;setTimeout(()=>netRetry(),4000)}else{this.ft=0;this.ready=true;this.preload();umbn();adStatus()}}).catch(()=>{this.ready=false;setTimeout(()=>netRetry(),4000)})}catch(e){}}
   else if(this.P)this.ready=false;
   umbn();adStatus()}catch(e){this.ok=false}},
  show(pl,cb){if(!this.ok||!this.ready||!this.isOn()){cb(false);return}
