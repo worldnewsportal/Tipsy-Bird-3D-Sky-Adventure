@@ -295,7 +295,9 @@ public class UnityAdsPlugin extends Plugin {
             bannerRefreshing = true;
             bannerLoading = true;
             bannerLoadStartedAt = now;
-            banner.load(new UnityAdsLoadOptions());
+            // Use the BannerView API for refreshes as well as the first load.
+            // The existing view stays attached; only its creative is replaced.
+            banner.load();
             stat("Banner", "refresh requested");
         } catch (Exception e) {
             bannerLoading = false;
