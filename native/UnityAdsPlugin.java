@@ -43,6 +43,7 @@ public class UnityAdsPlugin extends Plugin {
     private volatile String activeBannerPlacement = "";
     private long bannerLoadStartedAt = 0L;
     private boolean lifecycleRegistered = false;
+    private boolean initializationInFlight = false;
     private static final long BANNER_RETRY_MS = 15000L;
     private static final long BANNER_CHECK_INTERVAL_MS = 45000L;
     private static final long BANNER_LOAD_TIMEOUT_MS = 45000L;
@@ -159,6 +160,21 @@ public class UnityAdsPlugin extends Plugin {
         // Unity finishes initialization, even if the JS bridge is delayed.
         bannerWanted = true;
         call.setKeepAlive(true);
+        if (UnityAds.isInitialized()) {
+            try {
+                JSObject r = new JSObject();
+                r.put("initialized", true);
+                call.resolve(r);
+            } catch (Exception ignored) { }
+            registerBannerLifecycle();
+            scheduleBannerRetry(200L);
+            return;
+        }
+        if (initializationInFlight) {
+            try { call.resolve(); } catch (Exception ignored) { }
+            return;
+        }
+        initializationInFlight = true;
         ui(new Runnable() {
             public void run() {
                 try {
@@ -166,6 +182,7 @@ public class UnityAdsPlugin extends Plugin {
                     UnityAds.initialize(getContext(), gameId, testMode, new IUnityAdsInitializationListener() {
                         @Override
                         public void onInitializationComplete() {
+                            initializationInFlight = false;
                             try {
                                 JSObject r = new JSObject();
                                 r.put("initialized", true);
@@ -179,6 +196,7 @@ public class UnityAdsPlugin extends Plugin {
 
                         @Override
                         public void onInitializationFailed(UnityAds.UnityAdsInitializationError error, String message) {
+                            initializationInFlight = false;
                             try {
                                 JSObject r = new JSObject();
                                 r.put("failed", true);
@@ -188,6 +206,7 @@ public class UnityAdsPlugin extends Plugin {
                         }
                     });
                 } catch (Exception e) {
+                    initializationInFlight = false;
                     try {
                         JSObject r = new JSObject();
                         r.put("failed", true);
@@ -464,7 +483,9 @@ public class UnityAdsPlugin extends Plugin {
                                 bannerReady = false;
                                 String message = errorInfo != null && errorInfo.errorMessage != null
                                         ? errorInfo.errorMessage : "unknown";
-                                stat("Banner", "load failed (retry " + (++bannerTries) + "): " + message);
+                                String code = errorInfo != null && errorInfo.errorCode != null
+                                        ? errorInfo.errorCode.toString() : "unknown";
+                                stat("Banner", "load failed (" + code + ", retry " + (++bannerTries) + "): " + message);
                                 scheduleBannerRetry(BANNER_RETRY_MS);
                             }
                         });
@@ -478,8 +499,20 @@ public class UnityAdsPlugin extends Plugin {
                 FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
                         320 * density, 50 * density,
                         Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
-                root.addView(view, lp);
                 stat("Banner", "created " + bannerPlacement);
+                // Match Unity's official Android sample: request the banner
+                // first, then attach the same BannerView to the layout.
+                bannerLoading = true;
+                bannerLoadStartedAt = SystemClock.elapsedRealtime();
+                try {
+                    view.load();
+                    stat("Banner", "load requested");
+                } catch (Exception e) {
+                    bannerLoading = false;
+                    stat("Banner", "load call failed; retrying");
+                    scheduleBannerRetry(BANNER_RETRY_MS);
+                }
+                root.addView(view, lp);
             }
 
             showBannerView(activity, root);
