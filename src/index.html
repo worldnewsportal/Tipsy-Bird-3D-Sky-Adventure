@@ -1,4 +1,4 @@
-src<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8">
@@ -963,6 +963,19 @@ const DOC_URL={terms:'https://worldnewsportal.github.io/Tipsy-Bird-3D-Sky-Advent
 const openDoc=(k,direct)=>{if(direct&&navigator.onLine!==false){try{window.open(DOC_URL[k],'_blank');return}catch(e){}}const d=LEGAL[k],en=L==='en';$('#docTitle').textContent=en?d.en:d.ar;$('#docBody').dir=en?'ltr':'rtl';$('#docTitle').dir=en?'ltr':'rtl';$('#docDate').textContent=(L==='en'?'Last updated':'آخر تحديث')+' — 2026-11-20';$('#docBody').innerHTML=d.s.map(x=>'<h4 style="margin:12px 0 2px;font-size:15px;color:var(--ink)">'+(en?x[2]:x[0])+'</h4><p style="margin:0;font-size:13.5px;opacity:.9">'+(en?x[3]:x[1])+'</p>').join('');$('#s-doc').classList.add('on')};
 bind('#bTerms',()=>openDoc('terms',1));bind('#bPriv',()=>openDoc('priv',1));bind('#bDocX',()=>$('#s-doc').classList.remove('on'));
 const saveCode=()=>{try{return 'TB3D1.'+btoa(unescape(encodeURIComponent(JSON.stringify(St.d))))}catch(e){return ''}};
+function decodeSaveInput(input){
+ try{
+  let v=String(input||'').trim();
+  if(v.indexOf('TB3D1.')===0)v=v.slice(6);
+  if(!v)return null;
+  if(v[0]==='{')return JSON.parse(v);
+  const bin=atob(v);
+  let text='';
+  if(typeof TextDecoder==='function'){const bytes=Uint8Array.from(bin,c=>c.charCodeAt(0));text=new TextDecoder().decode(bytes)}
+  if(!text)text=decodeURIComponent(escape(bin));
+  return JSON.parse(text)
+ }catch(e){return null}
+}
 function bkShow(txt){$('#bkTa').value=txt||'';$('#bkInfo').textContent=txt?(L==='en'?'Save size: '+Math.round((txt.length/1024)*10)/10+' KB — copy this code and keep it anywhere':'حجم الحفظ: '+Math.round(txt.length/1024*10)/10+'KB — انسخ الكود واحفظه في أي مكان'):(L==='en'?'Paste a backup code then tap Import':'الصق كود النسخة الاحتياطية ثم اضغط استيراد');$('#s-bk').classList.add('on')}
 bind('#bExp',()=>{Au.init();Au.click();const code=saveCode();
  try{navigator.clipboard&&navigator.clipboard.writeText(code).then(()=>toast(L==='en'?'Copied ✓':'تم النسخ ✓')).catch(()=>{})}catch(e){}
@@ -972,10 +985,9 @@ bind('#bImp',()=>{Au.init();Au.click();bkShow('')});
 bind('#bBkX',()=>{Au.click();$('#s-bk').classList.remove('on')});
 bind('#bBkOk',()=>{Au.init();Au.click();const v=($('#bkTa').value||'').trim();
  const bad=()=>toast(T('كود غير صالح'));
- if(v.indexOf('TB3D1.')!==0){bad();return}
- try{const j=JSON.parse(decodeURIComponent(escape(atob(v.slice(6)))));
-  if(!j||typeof j!=='object'||!Array.isArray(j.bests)||!Array.isArray(j.own)){bad();return}
-  localStorage.setItem('tipsy3d',JSON.stringify(j));toast(T('تم الاستيراد!'));setTimeout(()=>location.reload(),600)}catch(e){bad()}});
+ const j=decodeSaveInput(v);
+ if(!j||typeof j!=='object'||Array.isArray(j)||!Array.isArray(j.bests)||!Array.isArray(j.own)){bad();return}
+ try{localStorage.setItem('tipsy3d',JSON.stringify(j));St.load();St.save();toast(T('تم الاستيراد!'));setTimeout(()=>location.reload(),600)}catch(e){bad()}});
 bind('#bBkPaste',()=>{Au.init();Au.click();const ta=$('#bkTa');const manual=()=>toast(L==='en'?'Long-press the box then tap Paste':'اضغط مطولًا على الحقل ثم اختر لصقًا');try{if(navigator.clipboard&&navigator.clipboard.readText){navigator.clipboard.readText().then(v=>{if(v){ta.value=v.trim();try{ta.focus()}catch(e2){}}else manual()}).catch(manual)}else manual()}catch(e){manual()}});
 
 bind('#bLang',()=>{L=L==='en'?'ar':'en';St.d.lang=L;St.save();applyLang()});
@@ -1004,14 +1016,14 @@ addEventListener('blur',pause);addEventListener('resize',resize);addEventListene
 /* ---------- Unity Ads bridge (rewarded only, user-initiated) ---------- */
 const AD_GIFT=15,AD_COOL=180000,AD_PLACE='Rewarded_Android',IN_PLACE='Interstitial_Android',BN_PLACE='Banner_Android',INT_EVERY=4,INT_COOL=120000;
 const AD20=20,AD50=50,AD20_COOL=90000,AD50_COOL=180000; // shop coin rewards: short ad (~30s) -> +20, double chained ad (~1min) -> +50
-const UA={P:null,ok:false,okIn:false,okBn:false,online:true,ready:false,nt:0,diag:{},bannerRequested:false,bannerPlugin:null,
+const UA={P:null,ok:false,okIn:false,okBn:false,online:true,ready:false,initializing:false,nt:0,diag:{},bannerRequested:false,bannerPlugin:null,
  isOn(){try{return navigator.onLine!==false}catch(e){return true}},
  preload(){if(!this.ready||!this.online||!this.P||!this.P.preload)return;try{this.P.preload({type:'rewarded',placement:AD_PLACE});this.P.preload({type:'interstitial',placement:IN_PLACE})}catch(e){}},
- init(){try{const C=window.Capacitor;let pp=null;if(C&&C.getPlugin){try{pp=C.getPlugin('UnityAds')}catch(e){}}
+ init(){try{if(this.ready||this.initializing)return;const C=window.Capacitor;let pp=null;if(C&&C.getPlugin){try{pp=C.getPlugin('UnityAds')}catch(e){}}
   this.P=pp||C&&C.Plugins&&C.Plugins.UnityAds||null;if(this.bannerPlugin!==this.P){this.bannerPlugin=this.P;this.bannerRequested=false}
   if(!this.P&&navigator.onLine!==false&&++this.nt<4){setTimeout(()=>{if(!UA.P)UA.init()},1200*(this.nt||1))}
   this.online=this.isOn();this.ok=!!(this.P&&this.P.showRewarded);this.okIn=!!(this.P&&this.P.showInterstitial);this.okBn=!!(this.P&&this.P.showBanner);
-  if(this.P&&this.P.initialize){try{Promise.resolve(this.P.initialize({gameId:window.UnityAdsGameId||'800443610',testMode:!!window.UnityAdsTestMode})).then(r=>{if(r&&r.failed){this.ready=false;setTimeout(()=>netRetry(),4000)}else{this.ft=0;this.ready=true;this.preload();umbn();adStatus()}}).catch(()=>{this.ready=false;setTimeout(()=>netRetry(),4000)})}catch(e){}}
+  if(this.P&&this.P.initialize){this.initializing=true;try{Promise.resolve(this.P.initialize({gameId:window.UnityAdsGameId||'800443610',testMode:!!window.UnityAdsTestMode})).then(r=>{this.initializing=false;if(r&&r.failed){this.ready=false;setTimeout(()=>netRetry(),4000)}else{this.ft=0;this.ready=true;this.preload();umbn();adStatus()}}).catch(()=>{this.initializing=false;this.ready=false;setTimeout(()=>netRetry(),4000)})}catch(e){this.initializing=false}}
   else if(this.P)this.ready=false;
   umbn();adStatus()}catch(e){this.ok=false}},
  show(pl,cb){if(!this.ok||!this.ready||!this.isOn()){cb(false);return}

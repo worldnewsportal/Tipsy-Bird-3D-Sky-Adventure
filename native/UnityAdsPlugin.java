@@ -155,10 +155,14 @@ public class UnityAdsPlugin extends Plugin {
         if (id != null && !id.isEmpty()) gameId = id;
         Boolean tm = call.getBoolean("testMode");
         if (tm != null) testMode = tm;
+        // Banner is persistent for this game: queue it from native as soon as
+        // Unity finishes initialization, even if the JS bridge is delayed.
+        bannerWanted = true;
         call.setKeepAlive(true);
         ui(new Runnable() {
             public void run() {
                 try {
+                    registerBannerLifecycle();
                     UnityAds.initialize(getContext(), gameId, testMode, new IUnityAdsInitializationListener() {
                         @Override
                         public void onInitializationComplete() {
